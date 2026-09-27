@@ -372,6 +372,23 @@ first or second try.
   seconds, and which part is expensive was not isolated (two attributions were
   tried and both were wrong). Check such a seam by running both sides against
   each other instead.
+- **A pair of consistency laws pins agreement, not meaning.** `check_exact`
+  (`conforms` iff `check` finds nothing) and the round-trip laws hold for any
+  change that is wrong in the *same direction on both sides*, so a fully green
+  gate can accept a core that has started accepting something else. Measured:
+  a repeated key was meant to be refused, and the correctness def that decides
+  it tested the keys *after* the one in hand instead of the one in hand, so
+  `conforms` returned `True` for `{"a":1,"a":2}` and `check` returned nothing.
+  Both sides were wrong together, so `check_exact` and `check_accurate` held;
+  the falsify instances passed on the broken core; and a mutant that makes
+  `check` return `Nothing` tests the *report*, not the refusal, so it does not
+  catch it either. What caught it was a law asserting the refusal at a
+  concrete value — `{conforms(s, r) == False}` together with
+  `{check(s, r) == Some{Err{path, why}}}` — for explicit constructors, and it
+  had to be written *before* the rest was trusted, because nothing else in the
+  gate pins that meaning. So: when a change is about what the core accepts,
+  write the law that states the acceptance itself, and prefer two mutants that
+  break it in two different ways (the report, and the test) over one.
 
 ## 1.6 Writing the proof
 
