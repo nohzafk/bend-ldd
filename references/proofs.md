@@ -190,6 +190,19 @@ confirmed against every example in Base:
   hypothesis may be written in a law's surface form (`String.eq(a, b)`) and
   still fire on the normalized goal (`String.eq.fin(String.cmp(a, b))`): the
   two are the same term.
+- **A constructor hides the hole, so lift the equation out of it.** A rewrite
+  replaces a goal's occurrence of a lemma's right-hand side, and an occurrence
+  inside a constructor is not one it reaches. The shape that bites is an
+  equation between two constructor applications --
+  `h : {Some{Err{p1, w1}} == Some{Err{p2, w2}} : Maybe<Err>}` -- where what the
+  proof needs is the equation of the parts. Congruence gives it: write the
+  stripping function as a def (`m => why_or(m)` for the `why` inside `Err`,
+  `m => maybe_why(m)` for the `Some{why}` a defect is written as) and derive
+  the equation with `Equal.cong(A, B, m => f(m), x, y, h)`. What comes out is a
+  theorem to hand to the goal as a term -- `same_why_m(..., h)`, the shape an
+  induction case closes with (`i1(h)`) -- not a rewrite either. Measured in
+  bend-schema's tag-key round on bend 2.0.32: the proof has such an equation in
+  hand and no `%` line for it, and `same_why`/`same_why_m` are a line each.
 
 ## 1.3 What computes, and what does not
 
