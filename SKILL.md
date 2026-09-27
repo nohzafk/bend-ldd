@@ -264,6 +264,7 @@ The gate is `bend PROOF.bend` plus the mutant check; run both before committing.
 | **`references/proofs.md`** | when you state or write a law: the gate, the rewrite, what computes, how to state, how to test the proofs |
 | **`references/workflow.md`** | when bringing one function under proof: the workflow in order, with the check to run at each step, and the two layers a core has |
 | **`references/js-host.md`** | only when a JavaScript program is the caller: the project layout, the module build, the bridge, and the test at real scale |
+| **`references/language.md` 3.5** | only when a core folds over a large input and needs a parallel entry point: the cut as a projection of the machine, the law for every piece size, and the measured traps |
 | **`references/method.md`** | when a SKILL.md section's summary is not enough: where Bend belongs, the checker's speed, the eight proof rules in full |
 | **`references/multi-agent.md`** | when splitting the work across agents: stages, freezes, budgets, and the gate a coordinator enforces |
 | [bend-falsify's README](https://github.com/nohzafk/bend-falsify) | the spec format, the mutant table fields, and every report line |

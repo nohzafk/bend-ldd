@@ -557,3 +557,69 @@ workaround; none is worth redesigning a core around.
 | a rewrite | it must restate the whole goal, so a goal over a wide state makes a long annotation. **Write the motive with the program's own source terms, not the printer's normal form**: the checker compares up to computation, so the annotation may name the term the program constructed (proofs.md 1.2, `references/examples/issue964.bend`). What is left is length, not impossibility. |
 | the printed goal | it cannot always be written back: a hub def prints by content hash, which does not lex; a local module prints by file name, while the annotation needs the import alias; the empty list prints as `[]`, while the constructor is `Nil{}`. This is a printer limit, not an annotation limit -- name the term as the program writes it (proofs.md 1.2) |
 | a quantity error | it names the wrong value |
+
+## 3.5 A proved parallel entry point
+
+A core is usually a fold over its input, and a fold does not parallelise: the
+runtime's `--threads` cannot split a self-call, because the next call depends
+on the accumulator. **The way out is a second entry point, and the law that
+says it answers what the first one does.** Measured on csv-lib (RFC 4180
+parsing, `bend2-play/embedded/csv-lib`): 10 MB in 0.42 s sequential, 0.23 s on
+ten threads, same rows and same error lines.
+
+**The cut is the whole design.** Splitting an input needs a place where a
+record is guaranteed to start, and that place is a property of the *machine*,
+not of the data:
+
+- **Track a projection of the machine, and cut where its own transition says
+  it is safe.** For a line-oriented format, run the state machine with only the
+  fields the cut needs -- a phase and a line number -- and cut after the
+  transition that closes a record. The walk is much cheaper than the real
+  machine (no field, no row), and it is a *generated table*: project `step` to
+  the fields you keep and the arms fall out of the same source, so a core change
+  cannot leave the walk behind. A pattern-match on tokens (the obvious
+  alternative) is exactly what the projection avoids.
+- **Each piece runs the real machine from a fresh state, seeded with the
+  values the cut tracked** -- here the line the piece starts on, so a refusal
+  inside piece 60 names the right line. Seeding anything the answer depends on
+  is what makes the law provable; a piece parsed from the wrong line is
+  refuted by a two-line input.
+- **Join the answers left to right**, so the law is one induction on a list
+  with one associativity lemma for the join.
+
+**What the law costs.** `for +z: Nat, +s: String {parse_par(z, s) == parse(s)}`
+for *every* piece size, which is stronger than a test can state and impossible
+for a test to check. The proof has two halves. The structural half is easy: a
+tree of joins answers the leaves in order, given associativity and a unit for
+the join. The interesting half is that the cut and the real machine compute the
+same rows, proved by running them side by side over the input with the
+induction hypothesis
+`cur (backwards) ran the machine to m` -- one hypothesis ties the walk's string
+buffer to the machine's state, and everything else is a rewrite. The table
+comes from `step`'s, arm by arm, so 30 cases cost one table.
+
+**The traps, all measured on csv-lib:**
+
+- **A fold in the pieces is the bottleneck.** `String` is a cons list, so
+  cutting a 10 MB string copies it: the cut took 89 ms of the 247 ms total.
+  This is the floor of the method; beating it means an `Array`-backed core.
+- **Sharing is what makes a parallel version slow.** The first version shared
+  the piece list in the tree (`+xs`, built with `take`/`drop`) and kept the
+  whole input alive for a fallback re-run: 380 ms and 0.5 GB, against 247 ms
+  and 0.26 GB without. Bend counts by type, so one shared `String` costs an
+  atomic per character read. Build the tree with a **pairing pass** (adjacent
+  leaves combine, repeat `log n` times) rather than `take`/`drop`, and give
+  the parallel entry point its own signature with no `+` on the input. Verify
+  in the emitted C: `term_keep` in a device def is a regression.
+- **Do not hang a `!` on it.** The GPU path builds (Metal, a `.gpu` beside the
+  binary) and runs, and on csv parsing it is 300x slower and dies with
+  `memory fault (machine stack overflow?)` past 1 MB. Parsing is divergent
+  cons-list work; the guide says as much about what the GPU is for. Measure the
+  CPU pool (`--gpu off`) before blaming the device.
+
+**When it pays.** The method is for a pure core over a *large* input where a
+record boundary is decidable from the state machine -- a log parser, a
+tokenizer, a line format, a fixed-width record. Not for a core whose answer
+needs the whole input in one pass, and not for a small core: the second entry
+point and its law are a real cost, and `native/scale.ts` in the project is the
+place that keeps it honest.

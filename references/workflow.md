@@ -89,6 +89,10 @@ the step to spend time on. The rules that shape it:
 - a computed decision goes to a def **as a parameter** (`keep(x, rest, ok)`, `place(r, ...)`), so a proof can split on it
 - a recursive call needed in only one branch is passed as a function (`v => add(rest, v)`), because two defs cannot call each other
 - no forward calls: order defs bottom-up (datatypes may come in any order)
+- **a fold over a large input gets a second, parallel entry point** whose law
+  says it answers what the first one does: the cut is decided by a projection
+  of the machine, and the law holds for every piece size. `language.md` 3.5 has
+  the shape, the numbers, and the traps
 - **do not call Base's `Nat.min` / `Nat.max`**: at run time they recurse once per unit and overflow the JS stack near 1e5. Pick with one comparison (`pick(Nat.is_le(a, b), a, b)`) and prove it equal to `Nat.min` (js-host.md)
 
 Check: `bend core.bend` compiles. Then check **equivalence with the function
