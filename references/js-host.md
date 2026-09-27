@@ -115,25 +115,32 @@ scale finds them, which is why the last step below is not optional.
   front, costs two frames per key and stops at 6,144. The point moves with the
   frame size and with the shape, so the proofs cannot see it.
 
-  **The fix that keeps every proof: a tail-recursive twin, proved equal.**
-  Leave the natural walk in the core as the spec the laws are stated over, add
-  a twin that runs flat, and prove one law, `twin(s) == spec(s)`; the host
-  calls the twin. For a map-shaped walk (`TCon{f(c), walk(t)}`) the twin
-  builds backwards onto an accumulator and reverses once. The proof is three
-  small inductions, each generalised over its accumulator: the backwards walk
-  is `rev_onto(spec(s), acc)`; `rev_onto(rev_onto(ts, acc), r) ==
-  rev_onto(acc, append(ts, r))`; `append(ts, Nil) == ts`. Measured on
-  csv-lib: its tokenizer threw near 35 KB, the twin parses 10 MB, and the
-  six existing proofs did not change (csv-lib `PROOF.bend`,
-  `parse_fast_is_parse`).
-- **Flat is not cheap: a per-character datatype costs heap.** csv-lib's
-  core, which builds a token object per character (twice) and fields as
-  lists, runs linearly at about 3.5 MB/s and peaks near 290 bytes of heap per
-  input character (10 MB of CSV: 2.9 GB); the hand-written reference does the
-  same 10 MB in a ninth of the time and a tenth of the memory. A string
-  consumed with `SCon` matching is *not* quadratic under bun: the emitted
-  `slice(1)` does not copy. Put the size a host will pass into the scale
-  test, and state the ceiling in the project's README.
+  **The fix that keeps every proof: a runtime twin, proved equal.** Leave
+  the form the laws are proved on in the core as the spec, add a twin that
+  runs flat, prove one law, `twin(s) == spec(s)`, and have the host call the
+  twin. Choose the twin by what it allocates, not only by its stack: a
+  tail-recursive tokenizer (build backwards, reverse) fixed csv-lib's stack
+  but still held a token object per character, all live at once (10 MB of
+  CSV: 2.9 GB). The twin that paid off fuses the pass away: a loop over the
+  string, `run(t, step_m(classify(c), m))`, whose `step` has the spec
+  machine's arms with each self-call `go(t, ph, st, out)` written as a state
+  `Run{ph, st, out}` and each answer as `Stop{r}`, which later characters
+  leave alone. The equality is one induction on the input, generalised over
+  the state: the character case is a lemma split on token x phase whose
+  every arm is the induction hypothesis (passed as a closure) or a
+  `run_stop` lemma -- a table a script generates from `step`. It checked on
+  the first run, the six existing proofs did not change, and the peak fell
+  to 0.9 GB (csv-lib `PROOF.bend`, `parse_fast_is_parse`).
+- **Base's string building emits ropes.** `String.reverse` and any
+  `SCon{c, acc}` accumulator compile to `c + acc` per character, so a string
+  the core builds reaches the host as a rope of one-character nodes, all
+  retained while the result is. In csv-lib that was half of the remaining
+  peak: replacing `String.reverse` with a native reverse in the emitted
+  module took 10 MB from 0.9 GB to 0.43 GB at the same speed. Consuming a
+  string with `SCon` matching is *not* quadratic under bun: the emitted
+  `slice(1)` does not copy. A pure machine still costs about 3.5x a
+  hand-written parser in time (a new state object per step). Put the size a
+  host will pass into the scale test, and state the ceiling in the README.
 - **Check every number at the door.** The core's laws hold for the unbounded
   Nat, and the run time stops at 2^48-1; a negative BigInt is not a Nat at
   all. The host refuses such values before calling the core.
