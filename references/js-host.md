@@ -114,6 +114,26 @@ scale finds them, which is why the last step below is not optional.
   walking an object field by field, each field looking its key up from the
   front, costs two frames per key and stops at 6,144. The point moves with the
   frame size and with the shape, so the proofs cannot see it.
+
+  **The fix that keeps every proof: a tail-recursive twin, proved equal.**
+  Leave the natural walk in the core as the spec the laws are stated over, add
+  a twin that runs flat, and prove one law, `twin(s) == spec(s)`; the host
+  calls the twin. For a map-shaped walk (`TCon{f(c), walk(t)}`) the twin
+  builds backwards onto an accumulator and reverses once. The proof is three
+  small inductions, each generalised over its accumulator: the backwards walk
+  is `rev_onto(spec(s), acc)`; `rev_onto(rev_onto(ts, acc), r) ==
+  rev_onto(acc, append(ts, r))`; `append(ts, Nil) == ts`. Measured on
+  csv-lib: its tokenizer threw near 35 KB, the twin parses 10 MB, and the
+  six existing proofs did not change (csv-lib `PROOF.bend`,
+  `parse_fast_is_parse`).
+- **Flat is not cheap: a per-character datatype costs heap.** csv-lib's
+  core, which builds a token object per character (twice) and fields as
+  lists, runs linearly at about 3.5 MB/s and peaks near 290 bytes of heap per
+  input character (10 MB of CSV: 2.9 GB); the hand-written reference does the
+  same 10 MB in a ninth of the time and a tenth of the memory. A string
+  consumed with `SCon` matching is *not* quadratic under bun: the emitted
+  `slice(1)` does not copy. Put the size a host will pass into the scale
+  test, and state the ceiling in the project's README.
 - **Check every number at the door.** The core's laws hold for the unbounded
   Nat, and the run time stops at 2^48-1; a negative BigInt is not a Nat at
   all. The host refuses such values before calling the core.
