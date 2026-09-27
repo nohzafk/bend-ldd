@@ -98,10 +98,29 @@ that is not in head position at all (`bend.ts:1855`).
   constructors a proof can split into, and a `U32` code point has none. The
   cost of getting this wrong is a core that runs, passes its oracle, and cannot
   be proved at all.
+- **A def in the same file takes no module prefix, and a rewrite needs an
+  equation to rewrite.** Two facts that cost a round each while writing a proof
+  over one's own core:
+  - the module alias applies only to what comes from that module. A def of the
+    file's own is `toK(p)`, not `C.toK(p)`, which is refused with
+    `expected : a defined name`.
+  - `%e : P` annotates a **goal**, so a def whose declared return type is a plain
+    type (`-> C.Res`) has nothing for `%` to rewrite: it is refused with
+    `expected : C.Res / observed : {... == ... : C.Res}`. State the step as an
+    equation in the return type, and put the `%` rewrites there.
 - **A constructor takes its fields positionally.** `SCon{c, t}`,
   `St{Nil{}, SNil{}, False{}, 1n}`, `Line{bad, rows}`. `SCon{head: c, tail: t}` is
   refused with `expected : a term / observed : ':'`. Named fields appear in a `type`
   declaration and nowhere else.
+- **A joint `match` binds a dependent pair to one name, and the chain comes
+  apart on its own.** `match s h:` with `case SCon{Chr{x}, t} hc:` is accepted --
+  the second scrutinee binds whatever its type is, a `&` chain or a sigma
+  included -- while writing the chain as a nested pattern there is refused with
+  `expected : 2 patterns (one per scrutinee)`. To take the parts, match the
+  evidence **alone**: `case (hse, hqu, hcr, hlf, ht):` destructures a chain, and
+  `case (p, heq, ht):` a sigma, in a def or an accessor that takes the evidence as
+  its parameter. `match h s:` is refused (the law's predicate is a def, so it is
+  `a match on a parameter or field`), and `match s h:` is the form that works.
 - **Matching on a parameter rewrites every hypothesis that mentions it**, which
   is what makes decision-as-parameter proofs work (proofs.md 1.5).
 
