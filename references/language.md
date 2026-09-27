@@ -82,6 +82,22 @@ that is not in head position at all (`bend.ts:1855`).
   (`case SCon{Chr{x}, t}:`, then `U32.is_lt(x, 48)`), so nothing there demonstrates
   the form. The code in a pattern is a `U32` literal and takes no suffix:
   `Chr{44n}` is refused, `expected : U32 / observed : Nat`.
+  **REVERSED: do not design a core around this.** A literal pattern does not
+  reduce when the character is abstract, so a law about such a core is
+  unprovable. Measured: a goal `{go(SCon{ch, t}, PhUnq{}, st, out) == R : Res}`
+  with `ch : Char` is reported **unreduced**, the term printed as written --
+  the checker can prove neither `ch == Chr{44}` nor `ch != Chr{44}`, so it
+  commits to no arm. The same stuckness reaches one level up: a predicate
+  written on those characters (`Clean(s)`, defined by matching `Chr{44}`,
+  `Chr{34}`, `Chr{13}`, `Chr{10}`) does not reduce either, so the hypothesis
+  every such law needs is itself inert. The concrete case is the control: the
+  same goal at `SCon{Chr{97}, t}` checks by `{==}`. This is why Base never
+  writes a literal character pattern -- it binds `Chr{x}` and compares the
+  `U32`. A core whose laws must reason about characters has to **classify the
+  character into a datatype (or a Bool) and match on that**: a datatype has
+  constructors a proof can split into, and a `U32` code point has none. The
+  cost of getting this wrong is a core that runs, passes its oracle, and cannot
+  be proved at all.
 - **A constructor takes its fields positionally.** `SCon{c, t}`,
   `St{Nil{}, SNil{}, False{}, 1n}`, `Line{bad, rows}`. `SCon{head: c, tail: t}` is
   refused with `expected : a term / observed : ':'`. Named fields appear in a `type`
