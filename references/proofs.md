@@ -122,6 +122,18 @@ confirmed against every example in Base:
   rewritten*. Not the whole argument, not the post-rewrite goal -- the subterm.
   After an earlier rewrite, that subterm may sit on the other side of the
   equation from where you expect.
+- **`P` need not be the goal's normal form: write the terms the program built.**
+  The checker compares `P(b)` with the goal up to computation, so the annotation may
+  name a term the program constructs -- `unit(a, "x")` -- instead of the 900-character
+  normal form the printer shows. Issue #964 was closed on exactly this, its reproducer
+  checking with a one-line motive: `%eq_refl(unit(a, "x")) : {True{} == go(7n,
+  Hold{_, String.append(unit(a, "x"), ","), unit(a, "x")}) : Bool}`. This is what makes
+  a proof over a program that builds data writable by hand at all; without it the
+  annotation restates the built term on every rewrite line. Verified on 2.0.31:
+  `references/examples/issue964.bend` is the file, and it checks with no unsafe note.
+- **`_` is for a proof's motive, never for a type.** The hole marks the occurrence
+  being replaced, so it belongs in the annotation after `%`; a law or a def's return
+  type carrying `_` is refused with `expected : a defined name / observed : _`.
 - The error prints the goal the way the checker sees it, already reduced:
 
   ```

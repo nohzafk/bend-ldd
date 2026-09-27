@@ -121,7 +121,17 @@ scale finds them, which is why the last step below is not optional.
 ### The build and the bridge
 
 - **Build the module** with `bunx bend-emit core.bend dist`. Extend the tool if
-  it refuses a type; do not work around it in the bridge.
+  it refuses a type; do not work around it in the bridge. What it refuses, and why,
+  measured:
+  - **It reads a `type` body as one constructor per line.** A constructor split
+    across lines, or a comment between the header and the last constructor, fails it
+    with `a constructor of X is not Name{field: Type, ...}`. Keep the body plain.
+  - **It encodes `Nat`, `Bool`, `String`, `U32` and the generics** (`List`, `Maybe`,
+    `Result`, `Either`, `Unit`), plus the types the file declares, and nothing else:
+    a signature mentioning `Char` fails with `no TypeScript encoding for the Bend
+    type Char`. At that one boundary take a `U32` and build the `Chr{c}` inside --
+    a `Char` and its code are the same value there, and strings cross to the host as
+    bytes (language.md 2.1) -- or extend the tool, which is the rule above.
 - **The bridge** hands the host's value to the bend-schema package's codec
   (`src/codec.ts`, `toRaw`), calls the core's entry point, which checks the
   value against a schema written in Bend and then validates it, and words a

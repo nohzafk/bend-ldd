@@ -75,6 +75,17 @@ that is not in head position at all (`bend.ts:1855`).
   (`case Some{iv} <> t:`), but a `Con` pattern cannot carry a `<>` inside it:
   `case Con{n <> t}:` is refused, write `case n <> t:`. A tuple pattern
   destructures a nested dependent pair: `case (+pre, w, post, eq, c):`.
+- **A character can be matched as a literal, not only bound.** `case SCon{Chr{44}, t}:`
+  checks, and so does a joint match that pins a two-character sequence
+  (`case SCon{Chr{13}, SCon{Chr{10}, t}} ...:`), which is how a parser sees a CRLF.
+  Base never does this -- it binds `Chr{x}` and compares the `U32`
+  (`case SCon{Chr{x}, t}:`, then `U32.is_lt(x, 48)`), so nothing there demonstrates
+  the form. The code in a pattern is a `U32` literal and takes no suffix:
+  `Chr{44n}` is refused, `expected : U32 / observed : Nat`.
+- **A constructor takes its fields positionally.** `SCon{c, t}`,
+  `St{Nil{}, SNil{}, False{}, 1n}`, `Line{bad, rows}`. `SCon{head: c, tail: t}` is
+  refused with `expected : a term / observed : ':'`. Named fields appear in a `type`
+  declaration and nowhere else.
 - **Matching on a parameter rewrites every hypothesis that mentions it**, which
   is what makes decision-as-parameter proofs work (proofs.md 1.5).
 
@@ -505,6 +516,6 @@ workaround; none is worth redesigning a core around.
 | limit | what it costs |
 |---|---|
 | a large numeral | a big fuel numeral the checker must unfold overflows its stack, so a program looping on a large fuel cannot prove anything about that loop; the cost is a fuel parameter on every decision function, so a law can pass a small one |
-| a rewrite | it must restate the whole goal, so symbolic proofs over wide states are generated rather than written |
-| the printed goal | it cannot always be written back: a hub def prints by content hash, which does not lex; a local module prints by file name, while the annotation needs the import alias; the empty list prints as `[]`, while the constructor is `Nil{}` |
+| a rewrite | it must restate the whole goal, so a goal over a wide state makes a long annotation. **Write the motive with the program's own source terms, not the printer's normal form**: the checker compares up to computation, so the annotation may name the term the program constructed (proofs.md 1.2, `references/examples/issue964.bend`). What is left is length, not impossibility. |
+| the printed goal | it cannot always be written back: a hub def prints by content hash, which does not lex; a local module prints by file name, while the annotation needs the import alias; the empty list prints as `[]`, while the constructor is `Nil{}`. This is a printer limit, not an annotation limit -- name the term as the program writes it (proofs.md 1.2) |
 | a quantity error | it names the wrong value |
