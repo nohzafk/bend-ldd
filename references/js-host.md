@@ -135,8 +135,10 @@ scale finds them, which is why the last step below is not optional.
   `SCon{c, acc}` accumulator compile to `c + acc` per character, so a string
   the core builds reaches the host as a rope of one-character nodes, all
   retained while the result is. In csv-lib that was half of the remaining
-  peak: replacing `String.reverse` with a native reverse in the emitted
-  module took 10 MB from 0.9 GB to 0.43 GB at the same speed. Consuming a
+  peak. bend-emit (since edcf64a) lowers `String.reverse`'s loop, and any def
+  of the same shape, to a flat native reverse: 10 MB went from 0.9 GB to
+  0.42 GB. A string the core builds forwards with `+` is still a rope; build
+  it backwards and `String.reverse` it, or flatten it in the bridge. Consuming a
   string with `SCon` matching is *not* quadratic under bun: the emitted
   `slice(1)` does not copy. A pure machine still costs about 3.5x a
   hand-written parser in time (a new state object per step). Put the size a
