@@ -189,7 +189,8 @@ beside the modules for the index. Only what mathlib cannot state goes to a
 local facts file of your own; add a line to that file's gate with a false-fact
 check that must be refused.
 
-Check: `bend PROOF.bend` prints `ALL PROOFS CHECK` and exits 0. An unsafe or
+Check: `bend PROOF.bend --verdict` prints `ALL PROOFS CHECK` and exits 0, so the
+proofs pass bend's checker and the BendTT kernel (proofs.md 1.1). An unsafe or
 foreign def anywhere in the proof, imports included, turns that into
 `SOME PROOFS FAIL` (exit 1). An unsafe def proves anything.
 

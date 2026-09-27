@@ -22,9 +22,11 @@ comes with its own language reference. `bun` is the other thing worth having.
 
 ## The gate
 
-Run before committing. `bend PROOF.bend`, through a wrapper that kills it at
-5 s, prints `ALL PROOFS CHECK` and exits 0 (a TODO or any unsafe or
-foreign code gives `SOME PROOFS FAIL`, exit 1). Every law has a mutant that fails inside that law's own proof.
+Run before committing. `bend PROOF.bend --verdict`, through a wrapper that
+kills it at 5 s, prints `ALL PROOFS CHECK` and exits 0 (a TODO, any unsafe or
+foreign code, or a kernel mismatch gives `SOME PROOFS FAIL`, exit 1). The first
+`--verdict` of a bend release builds the kernel with Lean; do that outside the
+wrapper. Every law has a mutant that fails inside that law's own proof.
 
 The 5 s limit is this skill's, not the language's. On a core shaped for proof
 the checker answers in a fraction of a second, so a check that runs into

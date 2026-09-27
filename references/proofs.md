@@ -19,13 +19,35 @@ statement is right, the rewriting itself is cheap.
 ## 1.1 Layout and the gate
 
 ```sh
-bend PROOF.bend          # ALL PROOFS CHECK                  -> exit 0
-bend LAWS.bend           # SOME PROOFS FAIL / 2 TODOs found. -> exit 1   (one per unproved law)
-bend PROOF.bend --verdict  # rechecks the defs outside Base with the Lean-proved BendTT kernel
+bend PROOF.bend --verdict  # ALL PROOFS CHECK                  -> exit 0   (the gate)
+bend PROOF.bend            # the same, bend's own checker only
+bend LAWS.bend             # SOME PROOFS FAIL / 2 TODOs found. -> exit 1   (one per unproved law)
 ```
 
+- **The gate is `--verdict`.** Plain `bend PROOF.bend` trusts one checker,
+  `bend.ts`, a few thousand lines of TypeScript with no proof. `--verdict`
+  runs it, then elaborates every def and type outside Base to BendTT and has
+  a second checker, the kernel in `bend2/bendtt.lean`, check that text. The
+  kernel's soundness argument is proved in Lean, so a pass rests on the
+  kernel and the elaborator, not on `bend.ts`.
+- **What `--verdict` can say.** `ALL PROOFS CHECK`; the unsafe error below; or
+  a *mismatch*: bend's checker accepted what the kernel rejects. A mismatch
+  is not a wrong proof -- it is a bug in bend's checker or a construct the
+  elaborator cannot yet express, and bend asks for an issue. A def the
+  elaborator cannot translate fails the verdict too; nothing is skipped.
+- **It needs Lean once per bend release.** The first run builds the kernel
+  with the elan toolchain bend names in its error (`leanprover/lean4:v4.x`,
+  found under `~/.elan/toolchains/`, or `$BENDTT` set to a built kernel) and
+  caches it in `~/.bend/bendtt/<hash>`. Measured on csv-lib: the build ~15 s, then
+  0.14 s for the plain check against 0.24 s under `--verdict`. Build
+  it outside a time-limited wrapper, then gate the proof file inside one.
+- **Control it.** `BENDTT=/usr/bin/false bend PROOF.bend --verdict` must give
+  the mismatch: that shows the kernel ran.
+- **Mutants stay on the plain check.** A mutant has to break a proof in bend's
+  checker; the kernel adds nothing there and costs a translation per run.
+
 - `LAWS.bend` states the claims and imports the code; `PROOF.bend` imports
-  `LAWS.bend` as `Laws` and proves them; `bend PROOF.bend` is the gate. A proof
+  `LAWS.bend` as `Laws` and proves them; `bend PROOF.bend --verdict` is the gate. A proof
   is a def named after its law: `law fee_monotone` in `LAWS.bend`
   is proved by `def Laws.fee_monotone(n, more, p): ...` in `PROOF.bend`. A law file cannot import a
   module that uses
@@ -52,7 +74,7 @@ bend PROOF.bend --verdict  # rechecks the defs outside Base with the Lean-proved
 
   A self-call that never shrinks is not checked, so the def type-checks at any
   type, a false equation included, and `def f?` makes it one character. The
-  checker refuses it through imports too. Gate on exit 0 and `ALL PROOFS CHECK`
+  checker refuses it through imports too, and `--verdict` refuses it as well. Gate on exit 0 and `ALL PROOFS CHECK`
   (`ALL PROOFS CHECK` goes to stdout, a failure verdict to stderr, so capture `2>&1`); the `rely on unsafe` line names
   every def whose proof passes through the unsafe one. A project frozen on an
   older bend printed `All terms check, but ...` with exit 0 here, so its gate
