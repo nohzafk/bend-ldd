@@ -347,78 +347,20 @@ first or second try.
   `e : {True{} == all_ok(people, h)}`, in the other `{False{} == ...}`. The
   caller passes `all_ok(people, h)` for `b` and `{==}` for `e`. No comparison
   is computed.
-- **The object of an induction has to be `Data`.** `Type` is affine, so its
-  values may be used once; `Data` may be reused, and `+x` requires it. A law whose
-  hypothesis is a `Type` -- a computed predicate -- therefore **cannot be proved at
-  all**: an induction needs its hypothesis at every step, so the second step is
-  `expected : h / observed : h (consumed more than once)`, and marking the binder
-  `+` is refused with `expected : Data / observed : Type`. Make the class a
-  datatype the induction carries, or use `List<&2, X>`, and there is no premise
-  left to consume. Measured: three re-statements of one premise, two agents and a
-  long session, no law proved -- on a core that agreed with its reference on 813 of
-  815 inputs. The guide's *Quantities* and *Kinds* own the rules this follows from.
-- **A decision on an abstract value does not reduce.** `U32.is_eq(c, 44)` with `c`
-  abstract is stuck, because the checker proves neither `c == 44` nor `c != 44`, so
-  a walk whose control classifies an abstract character cannot be followed,
-  whatever the law says. Carry the kind as data with the input -- a list of kinds,
-  not of characters -- and let the one step that classifies be a boundary the tests
-  cover rather than a proof obligation, the way an effect is.
-- **A predicate that answers `Bool` is inert as a law's hypothesis.** If a law
-  binds `for h: {Clean(s) == True{} : Bool}` and `Clean`'s body compares an
-  abstract value -- `Bool.pick(Bool, U32.is_eq(x, 44), False{}, Clean(t))` with `x`
-  abstract -- then `Clean(s)` **does not reduce**, so `h` is a stuck term and
-  nothing can be extracted from it. The induction dies exactly where the evidence
-  is needed, and no amount of proof effort helps: the checker can prove neither
-  `x == 44` nor `x != 44`, so it commits to no branch. Measured both ways on one
-  core: the Bool form left a goal that could not be closed, and every law was
-  unprovable, while the core itself ran and agreed with its reference on 813 of
-  815 inputs.
-  The fix is to make the predicate a **`Type` former that carries its evidence**,
-  one branch per constructor of the input:
+- **A class a proof walks over has to arrive as data, classification included.**
+  On one core, this cost three re-statements of a law's premise, two agents and a
+  long session, with no law proved: the class was a computed `Type`, so the
+  hypothesis could be used once and the induction died at its second step
+  (`consumed more than once`, and marking it `+` is refused with `expected : Data /
+  observed : Type`); and the walk branched on a classification of an abstract
+  character, which does not reduce -- `U32.is_eq(c, 44)` is stuck when `c` is
+  abstract, since the checker proves neither `c == 44` nor `c != 44`, so it commits
+  to no branch. The fix is one move, not two: carry the kind as data with the
+  input, so the constructor is the membership and the equations travel inside it.
+  *The rule this follows from is the guide's* (Quantities, Kinds); what the failure
+  bought is knowing that it decides the SHAPE OF THE LAW, before any proof is
+  attempted, and that no amount of proof effort recovers from it.
 
-  ```bend
-  def Clean(s: String) -> Type:
-    match s:
-      case SNil{}:
-        Unit
-      case SCon{Chr{x}, t}:
-        {U32.is_eq(x, 44) == False{} : Bool} & {U32.is_eq(x, 34) == False{} : Bool} & Clean(t)
-  ```
-
-  A law then binds `for h: Clean(s)`, the proof gets one equation per comparison,
-  and `%Equal.sym(Bool, U32.is_eq(x, 44), False{}, hse)` rewrites a stuck
-  comparison to `False{}` so the core's own branching reduces. Base does the same
-  where it needs it (`law Equal.cong` binds `for e: {a == b : A}`), and a
-  `Type`-valued predicate is already the shape of a validating core's `Accurate`.
-  The rule: **if a law's hypothesis must tell the proof something, it has to carry
-  it as a type, not as a `Bool` that happens to be `True`.**
-- **When the evidence must name a classification, carry a data witness for it.**
-  The `Bool` fix above is not always enough. If the core branches on a *computed*
-  classification and only part of it is known -- a walk over "the characters that
-  are not quotes", where the core's next step depends on which of the other four
-  kinds it is -- then the equations above still leave `C.classify(x)` stuck, and a
-  `match` on it commits to no branch. Name the kind as **data** and let the walk
-  take it as a parameter, so the goal is stated in terms of a constructor:
-
-  ```bend
-  type PK is Data:
-    PSep{}
-    PCR{}
-    PLF{}
-    POther{c: U32}
-  def toK(+p: PK) -> C.K: ...          # the witness, as the kind the core wants
-  def Plain(s: String) -> Type:
-    match s:
-      case SNil{}:
-        Unit
-      case SCon{Chr{x}, t}:
-        &p: PK -> {C.classify(x) == toK(p) : C.K} & Plain(t)
-  ```
-
-  The walk's own step is then `go(TCon{toK(PSep{}), ...}, ...) == ...`, which
-  reduces because `toK` of a constructor is a constructor, and the caller joins the
-  two ends with the equation in its own hand. Four such steps, one per kind,
-  replaced a stuck goal in this project's core.
 - **Carry a witness, not a test.** `a <= b` read as `b == Nat.add(a, k)` makes
   every hypothesis an equation `%` rewrites freely; transitivity is four lines
   that way, and `is_le` comes back at the end through one lemma
