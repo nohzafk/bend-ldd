@@ -43,7 +43,7 @@ to somebody's project.
 
 | tool | what it is | reach for it when |
 | --- | --- | --- |
-| [`lawcheck`](https://github.com/bendlib/bendlib) | generates instances and mutants, and runs them through the checker | falsifying a law or mutating a core. Needs no spec file |
+| [`lawcheck`](https://github.com/bendlib/bendlib) | generates instances and mutants, and runs them through the checker | falsifying a law or mutating a core. Needs no spec file. **Does not run on bend 2.0.32; use bend-falsify.** |
 | [`bend-falsify`](https://github.com/nohzafk/bend-falsify) | takes instances and mutants you wrote, and ties each to the proof it should break | lawcheck skipped a law, or a mutant has to fail in a *specific* proof |
 | [`bend-emit`](https://github.com/nohzafk/bend-emit) | builds the typed JavaScript module from a core | a JavaScript program is the caller |
 | [`bend-schema`](https://github.com/nohzafk/bend-schema) | the codec and schemas where host values cross into Bend types | a JavaScript program is the caller |

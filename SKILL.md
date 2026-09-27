@@ -145,7 +145,8 @@ complete without one — a core with no caller is a normal thing to prove.
   to a small local facts file of your own, whose gate must also refuse a false
   fact.
 - **lawcheck** is bendlib's `tools/lawcheck`. It generates literal instances and
-  small mutants and runs them through the checker. Reach for it first. Add
+  small mutants and runs them through the checker. **It does not run on bend
+  2.0.32** (see the next section); until it is ported, use bend-falsify. Add
   bendlib as a git submodule at `vendor/bendlib` and set
   `LAWCHECK=vendor/bendlib/tools/lawcheck/cli.ts`. The path is relative to the
   project, not to a bendlib checkout.
@@ -159,6 +160,12 @@ needs it, and **installing one is the user's call: ask before you add a
 dependency to their project.**
 
 ## Tool strategy: lawcheck first, bend-falsify for what it skips
+
+> **On bend 2.0.32 lawcheck does not run; use bend-falsify for every law.**
+> Its reader cannot load a file (2.0.32 changed the checker's spans, its
+> verdict text and its import-path rule), and a partial port stopped at 84 of
+> 103 of its tests. This section describes lawcheck as it works on the bend it
+> is pinned to, for when it is ported.
 
 **Run lawcheck on every law before you prove it.** It is the mechanical
 falsifier and mutator, it needs no spec file, and it shrinks what it finds.
