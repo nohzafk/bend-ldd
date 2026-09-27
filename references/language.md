@@ -137,7 +137,7 @@ datatypes or for unsafe defs. One case per line:
 | a safe def calls an unsafe def (`def g?`) below it | refused, the same error |
 | `type Forest` holds a `Tree`, and `type Tree` is declared below it | checks, and runs |
 | a def returns `Iv`, and `type Iv` is declared below it | checks, and runs |
-| an `@unsafe def` calls an `@unsafe def` below it | checks, with `All terms check, but 3 defs rely on unsafe or foreign code` |
+| an `@unsafe def` calls an `@unsafe def` below it | runs; a check prints `SOME PROOFS FAIL` / `3 defs rely on unsafe or foreign code`, exit 1 |
 | `def even?` and `def odd?` call each other | checks, and runs (`even(7n)` is `odd`) |
 
 `def f?(..)` is new sugar for `@unsafe def f(..)`. The error for a forward call
@@ -350,8 +350,10 @@ Only the middle kind is worth a change. Nothing in the third bucket is.
   `String.length` counts UTF-16 code units, so a length from `.length` cuts any
   non-ASCII answer short; take it from `TextEncoder`.
 - **The build names the foreign code**:
-  `All terms check, but 3 defs rely on unsafe or foreign code: ...`. The trust
-  boundary is in the build output.
+  `SOME PROOFS FAIL` / `Error: 3 defs rely on unsafe or foreign code: ...`,
+  exit 1. The trust boundary is in the build output. So a file with foreign
+  code never checks green: run it, and keep every foreign def out of what
+  `PROOF.bend` imports.
 - **When a patch fails to compile, the old binary runs.** `>/dev/null` on a
   bend build has cost a whole round of debugging; read the build output.
 
@@ -359,7 +361,8 @@ Only the middle kind is worth a change. Nothing in the third bucket is.
 
 `~/.bend/bend2/effs/` has no stdin effect: no `read_line`, no `getline`. The
 "input" in the guide's effect list is App keyboard and mouse; `IO.args()` does
-answer the command line. Reading stdin means adding an effect, and the rule
+answer the command line (its head is the program, like C's `argv[0]`; the
+arguments start at index 1). Reading stdin means adding an effect, and the rule
 that makes it work is the one that cost the most here.
 
 **A host function must park the computation, never block it.** Both lanes run

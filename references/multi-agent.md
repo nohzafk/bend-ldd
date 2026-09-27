@@ -97,7 +97,7 @@ each of those tools needs the user's permission to add.
 ## The gate the coordinator enforces
 
 These run on every merge and at the end, whatever an agent reports:
-- `bend PROOF.bend` prints `All terms check.`, with no TODO and no line about relying on unsafe code. An unsafe definition proves anything.
+- `bend PROOF.bend` prints `ALL PROOFS CHECK` and exits 0 (a TODO or unsafe code gives `SOME PROOFS FAIL`, exit 1). An unsafe definition proves anything.
 - `LAWS.bend` has the hash the human approved.
 - Every law has a mutant, every mutated core compiles, and every mutant fails in the law's own proof.
 - The falsifier's control finds its planted bug.

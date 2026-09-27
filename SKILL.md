@@ -31,13 +31,14 @@ not importance. Everything pure can move into the core, starting where a wrong
 answer costs the most. The core is where Bend earns its cost: the checker proves
 claims about **every** input, which no type system and no test suite does.
 
-Before writing any Bend: run `bend guide`; read the four rules and three
-principles below, and the map at the end of this file for what to read next (when the checker refuses a form, look up the rule before
-working around it — it is usually refusing a shape that cannot be compiled, not
-a bug); read `~/.bend/bend2/base.bend`, the standard library and a working
-example of every rule; and look in **mathlib** before proving a fact about
-`Nat`, `String`, `List`, `Bool` or comparison, since it is very likely already
-there (`PUBLIC_API.lock` beside the modules is the index).
+Before writing any Bend:
+
+1. Run `bend guide`. It owns the syntax, the types and the law convention.
+2. Read the four rules and three principles below, then the map at the end of
+   this file for what to read next.
+3. Before proving a fact about `Nat`, `String`, `List`, `Bool` or comparison,
+   look in `~/.bend/bend2/base.bend` and in **mathlib** (`PUBLIC_API.lock`
+   beside the modules is the index). It is very likely already there.
 
 ## The four rules you meet first
 
@@ -108,8 +109,9 @@ complete without one — a core with no caller is a normal thing to prove.
 
 ## The pieces, by role
 
-- **The checker** is `bend`. The gate is `bend PROOF.bend` printing `All terms
-  check.`, with no TODO and no line about relying on unsafe or foreign code. Wrap
+- **The checker** is `bend`. The gate is `bend PROOF.bend` exiting 0 with `ALL
+  PROOFS CHECK`; a TODO, a type error or any unsafe or foreign def gives
+  `SOME PROOFS FAIL` and exit 1. Wrap
   every check in a 5 s timeout, and keep the wrapper beside the project:
 
   ```sh

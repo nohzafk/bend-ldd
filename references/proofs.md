@@ -19,8 +19,9 @@ statement is right, the rewriting itself is cheap.
 ## 1.1 Layout and the gate
 
 ```sh
-bend PROOF.bend          # All terms check.   -> exit 0
-bend LAWS.bend           # 2 TODOs found.      -> exit 1   (one per unproved law)
+bend PROOF.bend          # ALL PROOFS CHECK                  -> exit 0
+bend LAWS.bend           # SOME PROOFS FAIL / 2 TODOs found. -> exit 1   (one per unproved law)
+bend PROOF.bend --verdict  # rechecks the defs outside Base with the Lean-proved BendTT kernel
 ```
 
 - `LAWS.bend` states the claims and imports the code; `PROOF.bend` imports
@@ -34,25 +35,28 @@ bend LAWS.bend           # 2 TODOs found.      -> exit 1   (one per unproved law
   assumed: `bend` exits 1 on a type error and on TODOs, 0 when everything
   checks. `@unsafe` (or `def f?`) skips the *termination*
   check; it is not a way to silence a TODO.
-- **An unsafe def proves anything, and the gate still says "All terms
-  check".** Three defs, one call:
+- **An unsafe def proves anything; the gate refuses it.** Three
+  defs, one call:
 
   ```bend
   def lie?() -> {0n == 1n : Nat}:
     lie()
   def claim() -> {0n == 1n : Nat}:
     lie()
-  # All terms check, but 2 defs rely on unsafe or foreign code:
+  # SOME PROOFS FAIL
+  # Error: 2 defs rely on unsafe or foreign code:
   # - lie
   # - claim
-  # exit 0
+  # exit 1
   ```
 
   A self-call that never shrinks is not checked, so the def type-checks at any
-  type, a false equation included. The exit code is 0, and a gate that greps for
-  `All terms check` passes, and `def f?` makes it one character. The only signal is the `rely on unsafe or
-  foreign code` line, which names every def whose proof passes through the
-  unsafe one. A proof file must have no such line.
+  type, a false equation included, and `def f?` makes it one character. The
+  checker refuses it through imports too. Gate on exit 0 and `ALL PROOFS CHECK`
+  (`ALL PROOFS CHECK` goes to stdout, a failure verdict to stderr, so capture `2>&1`); the `rely on unsafe` line names
+  every def whose proof passes through the unsafe one. A project frozen on an
+  older bend printed `All terms check, but ...` with exit 0 here, so its gate
+  cannot be trusted for this.
 - **A proof's parameters carry no annotation and no mark.** The law supplies
   the types: `def Laws.x(slot):`, not `def Laws.x(slot: C.Iv):` -- annotating
   is refused (`expected : a name, observed : ':'`), and so is marking
@@ -129,7 +133,7 @@ confirmed against every example in Base:
   checking with a one-line motive: `%eq_refl(unit(a, "x")) : {True{} == go(7n,
   Hold{_, String.append(unit(a, "x"), ","), unit(a, "x")}) : Bool}`. This is what makes
   a proof over a program that builds data writable by hand at all; without it the
-  annotation restates the built term on every rewrite line. Verified on 2.0.31:
+  annotation restates the built term on every rewrite line.
   `references/examples/issue964.bend` is the file, and it checks with no unsafe note.
 - **`_` is for a proof's motive, never for a type.** The hole marks the occurrence
   being replaced, so it belongs in the annotation after `%`; a law or a def's return
@@ -347,19 +351,59 @@ first or second try.
   `e : {True{} == all_ok(people, h)}`, in the other `{False{} == ...}`. The
   caller passes `all_ok(people, h)` for `b` and `{==}` for `e`. No comparison
   is computed.
-- **A class a proof walks over has to arrive as data, classification included.**
-  On one core, this cost three re-statements of a law's premise, two agents and a
-  long session, with no law proved: the class was a computed `Type`, so the
-  hypothesis could be used once and the induction died at its second step
-  (`consumed more than once`, and marking it `+` is refused with `expected : Data /
-  observed : Type`); and the walk branched on a classification of an abstract
-  character, which does not reduce -- `U32.is_eq(c, 44)` is stuck when `c` is
-  abstract, since the checker proves neither `c == 44` nor `c != 44`, so it commits
-  to no branch. The fix is one move, not two: carry the kind as data with the
-  input, so the constructor is the membership and the equations travel inside it.
-  *The rule this follows from is the guide's* (Quantities, Kinds); what the failure
-  bought is knowing that it decides the SHAPE OF THE LAW, before any proof is
-  attempted, and that no amount of proof effort recovers from it.
+- **A predicate computed as a `Type` is a usable premise: take it apart once
+  per step.** *This reverses an earlier entry here, which said such a class must
+  arrive as a datatype.* State the class as a def matched on the input, whose
+  cons case is a chain of dependent pairs: the facts about this element, then
+  the predicate on the tail. In the proof, match the input, destructure the
+  premise once, and hand the tail's piece to the recursive call:
+
+  ```bend
+  def Clean(s: String) -> Type:          # in LAWS.bend
+    match s:
+      case SNil{}:
+        Unit
+      case SCon{Chr{x}, t}:
+        {U32.is_eq(x, 44) == False{} : Bool} & ... & Clean(t)
+
+  def walk(s: String, h: Laws.Clean(s), ...) -> {...}:   # in PROOF.bend
+    match s:
+      case SNil{}:
+        {==}
+      case SCon{Chr{+x}, t}:
+        (hse, hqu, hcr, hlf, ht) = h     # each piece used once
+        ...
+        walk(t, ht, ...)
+  ```
+
+  Every piece is used exactly once, so the premise never needs `+` (which a
+  `Type` refuses: `expected : Data / observed : Type`). `consumed more than once`
+  on such a premise means one proof passed the same `h` to two consumers -- a
+  `match` and a helper lemma, say -- not that the statement is unprovable. Keep
+  the facts as equations on a comparison (`{U32.is_eq(x, 44) == False{} :
+  Bool}`), not a Bool predicate: a comparison of an abstract character does not
+  reduce, and the equation is what a rewrite turns into a branch the program
+  takes. Measured on csv-lib: the whole proof checks this way, with no mirror
+  datatype and no conversion from the premise to one.
+- **A state machine a proof walks reads one token per case.** A case that looks
+  two tokens ahead (`case TCon{KCR{}, TCon{KLF{}, t}} PhUnq{}:`) does not reduce
+  when the tail is abstract, even in a phase where the lookahead does not
+  matter: the match tree tests the second token before it reaches the phase, and
+  the second token of an abstract tail is a stuck `classify(c)`. Turn the
+  lookahead into a phase (a CR seen, its meaning not yet known) so every case
+  inspects one token. Then a proof over "every input from every state" is one
+  case split per token, and a lemma quantified over the phase and the state
+  (`@ph2 -> @st2 -> ...`, passed in as `ih`) serves all of them. Measured on
+  csv-lib: with the lookahead no quoted-field proof could step past a CR; after
+  the change the oracle and falsifier were unchanged and all six laws closed.
+- **A step that reads part of a state takes that part, not the state.**
+  `close_rec(st, out)` matching `started_of(st)` stays stuck on an abstract
+  flag, so two states that differ only in position give two different stuck
+  terms, and no rewrite makes them one. Passing `row_of(st)`, `fld_of(st)` and
+  the flag as separate arguments makes both reduce to the same term. A law that
+  compares two runs ("a blank line adds nothing") then needs a lemma over the
+  state's constructor fields -- `C.St{r, f, g, l1, c1, ...}` against
+  `C.St{r, f, g, l2, c2, ...}` -- that position never changes the answer.
 
 - **Carry a witness, not a test.** `a <= b` read as `b == Nat.add(a, k)` makes
   every hypothesis an equation `%` rewrites freely; transitivity is four lines

@@ -189,8 +189,9 @@ beside the modules for the index. Only what mathlib cannot state goes to a
 local facts file of your own; add a line to that file's gate with a false-fact
 check that must be refused.
 
-Check: `bend PROOF.bend` prints `All terms check.` with **no** "rely on unsafe
-or foreign code" line. An unsafe def proves anything.
+Check: `bend PROOF.bend` prints `ALL PROOFS CHECK` and exits 0. An unsafe or
+foreign def anywhere in the proof, imports included, turns that into
+`SOME PROOFS FAIL` (exit 1). An unsafe def proves anything.
 
 ### 6. Give every law a mutant
 

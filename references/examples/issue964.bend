@@ -9,7 +9,7 @@ import Base
 # normal form by hand would mean restating a 900-character term on every
 # rewrite line.
 #
-# Verified on bend 2.0.31: `All terms check.`, exit 0, no unsafe note.
+# Checks: `ALL PROOFS CHECK`, exit 0, no unsafe note.
 #
 # Reflexivity of `String.eq` is taken as a hypothesis rather than proved, so the
 # file is self-contained and proves nothing about strings -- the point is the
