@@ -347,54 +347,22 @@ first or second try.
   `e : {True{} == all_ok(people, h)}`, in the other `{False{} == ...}`. The
   caller passes `all_ok(people, h)` for `b` and `{==}` for `e`. No comparison
   is computed.
-- **The object of an induction has to be `Data`.** This is the quantity system
-  deciding the shape of a law, and it is the first thing to check, before any
-  proof is attempted. From `bend guide` (Quantities, Kinds):
-
-  > Reusable variables require `Data`: functions, arrays and IO handles are
-  > `Type`, so they can never be copied. ... Matching a `+` value hands out `+`
-  > fields; on a plain one, write `+r` in the pattern to make a field reusable.
-  >
-  > `type List<a, -A: Kind(a)> is Kind(a)`, making a list exactly as reusable as
-  > its elements: `List<U32>` is short for `List<&1, U32>`, and `+List<U32>` for
-  > `List<&2, U32>`.
-
-  So a hypothesis that is a **`Type`** -- anything computed, and every predicate
-  written as a `Type` former -- **can be used once**, and an induction needs it at
-  every step: the second step is `expected : h / observed : h (consumed more than
-  once)`, and marking the binder `+` is refused with `expected : Data / observed :
-  Type`. A law written `for h: Clean(s)` over a computed class is therefore **not
-  hard to prove, it is impossible**, and no amount of proof effort changes that.
-  Measured: two agents and one long session, three re-statements of the same
-  premise, no law proved.
-
-  The fix is to make the class **a data type carried by the induction**, so there
-  is no premise to consume:
-
-  ```bend
-  # a run of non-quote characters, as DATA: the constructor IS the membership
-  type Plain is Data:
-    PNil{}
-    PCon{c: U32, rest: Plain}
-
-  law plain_input_is_one_field:
-    for +cs: List<&2, U32>          # Data, reusable, no premise at all
-    {C.parse(plain_str(cs)) == ... : C.Res}
-  ```
-
-  `List<&2, X>` is the same idea where a list is enough. The proof then
-  destructures the data -- the guide's own induction pattern -- with nothing to
-  carry between steps.
-
-  **And one limit that no amount of `Data` removes**: a decision on an abstract
-  value does not reduce. `U32.is_eq(c, 44)` with `c` abstract is stuck, because
-  the checker proves neither `c == 44` nor `c != 44`; so a walk whose control
-  depends on classifying an abstract character cannot be followed, however the
-  law is stated. Carry the classification **as data with the input** (a list of
-  kinds, not characters), state the law over that, and let the single
-  classification step at the entry point be a boundary the tests cover rather than
-  a proof obligation. This is the same division of labour as `io-effects`: a pure
-  core, and a thin unproven seam where the host's data enters.
+- **The object of an induction has to be `Data`.** `Type` is affine, so its
+  values may be used once; `Data` may be reused, and `+x` requires it. A law whose
+  hypothesis is a `Type` -- a computed predicate -- therefore **cannot be proved at
+  all**: an induction needs its hypothesis at every step, so the second step is
+  `expected : h / observed : h (consumed more than once)`, and marking the binder
+  `+` is refused with `expected : Data / observed : Type`. Make the class a
+  datatype the induction carries, or use `List<&2, X>`, and there is no premise
+  left to consume. Measured: three re-statements of one premise, two agents and a
+  long session, no law proved -- on a core that agreed with its reference on 813 of
+  815 inputs. The guide's *Quantities* and *Kinds* own the rules this follows from.
+- **A decision on an abstract value does not reduce.** `U32.is_eq(c, 44)` with `c`
+  abstract is stuck, because the checker proves neither `c == 44` nor `c != 44`, so
+  a walk whose control classifies an abstract character cannot be followed,
+  whatever the law says. Carry the kind as data with the input -- a list of kinds,
+  not of characters -- and let the one step that classifies be a boundary the tests
+  cover rather than a proof obligation, the way an effect is.
 - **A predicate that answers `Bool` is inert as a law's hypothesis.** If a law
   binds `for h: {Clean(s) == True{} : Bool}` and `Clean`'s body compares an
   abstract value -- `Bool.pick(Bool, U32.is_eq(x, 44), False{}, Clean(t))` with `x`

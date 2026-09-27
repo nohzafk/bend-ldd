@@ -39,23 +39,6 @@ example of every rule; and look in **mathlib** before proving a fact about
 `Nat`, `String`, `List`, `Bool` or comparison, since it is very likely already
 there (`PUBLIC_API.lock` beside the modules is the index).
 
-**The references below are not a language specification.** They are experience:
-`language.md` says so of itself ("Syntax and types are not in this file"), and
-every rule in it was bought by one failed build. Reading only them means learning
-what has bitten someone, not what the language is -- and a session that did
-exactly that spent three re-statements of one law's premise and proved nothing,
-because the fact that decided its shape is in the guide. Four guide sections
-decide whether a law can be proved **before any proof is attempted**:
-
-| `bend guide` section | what it decides |
-| --- | --- |
-| **Quantities** and **Kinds** | what may be copied. `Type` is affine (**one use**), `Data` may be reused; `+x` needs `Data`. So **the object of an induction must be `Data`**, and a hypothesis that is a `Type` can be used once -- which an induction cannot live with. A list is as reusable as its elements: `List<&2, X>` is the reusable form. |
-| **Laws and Proofs** | the whole shape: `P` marks the right-hand side with `_` and the goal becomes `P` with the left there; `exs y: T` is a witness; `?name` prints a goal; `{a != b : T}` is `{a == b : T} -> Empty`; a def may return a `Type`, which is all dependent types are. |
-| **Recursion and Termination** | the shrinking argument goes first; **mutual recursion is not allowed** and becomes one def with an argument selecting which to run; `match` takes a parameter or a pattern variable, never a computed value. |
-| **Types and Functions** | the default quantity: variables are affine, so every reuse needs a `+` and a reason. |
-
-Read those four before drafting a law. Nothing below replaces them.
-
 ## The four rules you meet first
 
 Each costs one failed build the first time. The error is what you will see; the
