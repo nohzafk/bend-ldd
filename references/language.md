@@ -42,7 +42,12 @@ that is not in head position at all (`bend.ts:1855`).
   t: ...`) is refused, the error naming the second match's scrutinee
   (`a match on a parameter or field (this name is a def or a consumed binder:
   give the value its own def)`); put the destructuring in the branches, where it
-  is used.
+  is used. A `%e : P` line blocks it the same way, with the same error: an arm
+  that rewrites and then matches (`case False{}: %h2 : {...}; match k: ...`) is
+  refused, so the two fixes are one shape -- give the match its own def, put it
+  at the head of that def's body, and call it from the branch that rewrote
+  (`esc_read_unq` in csv-lib's `PROOF.bend`: the isq branch rewrites, and the
+  kind match lives in the def it calls).
 - **Expose every argument the checker has to compute through.**
   `Nat.cmp(a, b)` only reduces when *both* arguments are constructors, so a
   lemma about `cmp` usually needs a joint match (`match x m:`), not a nested
