@@ -37,7 +37,12 @@ that is not in head position at all (`bend.ts:1855`).
 - **No match inside a case arm.** Several things to inspect travel in
   together: `match a b:` splits on several scrutinees at once, with nested
   patterns (`case 1n+f CS{Job{step, dur, people}, t, ...}`), and `case 0n _:`
-  is allowed.
+  is allowed. A destructuring line is a match as well, and an arm holds one: an
+  arm that destructures and then matches (`case Con{f, +t}: (hf, ht) = hc; match
+  t: ...`) is refused, the error naming the second match's scrutinee
+  (`a match on a parameter or field (this name is a def or a consumed binder:
+  give the value its own def)`); put the destructuring in the branches, where it
+  is used.
 - **Expose every argument the checker has to compute through.**
   `Nat.cmp(a, b)` only reduces when *both* arguments are constructors, so a
   lemma about `cmp` usually needs a joint match (`match x m:`), not a nested
@@ -298,7 +303,10 @@ From the book (`basics-types`): `Type` is short for `Kind(&1)` and `Data` for
   (`check0(s, r) = check(~no_rule, s, r, None{})`).
 - **`List.append` and `List.length` take their quantity and type as plain
   parameters** (`List.append(&2, C.Iv, xs, ys)`), not as `~` templates, so a
-  lemma over variables can use them.
+  lemma over variables can use them. `List.reverse` too, and the rest of the
+  list module: `String.reverse(s)` takes one argument where the list one takes
+  three, so the habit carries over wrongly and every such call in a file is
+  refused the same way -- `expected : Quant / observed : List<&2, C.Iv>`.
 
 ## 1.5 What these rules do not justify
 
