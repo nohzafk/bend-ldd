@@ -574,7 +574,7 @@ input that is two lines, and the claim closes for every pair of names.
   is why a law on concrete data closes by `{==}` while the same theorem over
   variables does not.
 
-When the loop can be restructured, 3.5's decision-as-parameter and computed
+When the loop can be restructured, 1.5's decision-as-parameter and computed
 count avoid all of this, and keep goals short enough to write by hand.
 
 ## 1.8 Facts you do not have to prove

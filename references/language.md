@@ -538,7 +538,7 @@ UTF-8 survives the round trip, a broken byte becomes U+FFFD.
   thousands of characters, so such proofs end up generated. The first laws of
   a project are pleasant and the symbolic ones cost ten times more: the most
   valuable kind of proof is the most expensive kind -- unless the core is
-  shaped as in 3.5, which keeps goals short.
+  shaped as in proofs.md 1.5, which keeps goals short.
 
 ## 3.3 What laws buy, and what they do not
 
