@@ -222,6 +222,22 @@ arguments are read left to right, each passed unchanged until one shrinks).
       case None{} <> t:    None{}
   ```
 
+- **A helper's result cannot be the argument that shrinks.** `walk(rest_of(s),
+  acc)` with `rest_of` being `case SCon{c, t}: t` is refused --
+  `expected : a decreasing self-call (arguments are read left to right: each
+  passed unchanged until one shrinks)` -- even though the shrink is the first
+  argument and the rest is a variable. "Unchanged" is read against the def's own
+  binders, so a value another call returned is never seen as a subterm.
+  Consequence: "peel a piece off with a helper, then recurse on what it left"
+  cannot be written at all. A pass that consumes to a variable depth is one
+  walk, and its self-call takes a pattern-bound tail.
+- **Layered walks are expressible, and this is the shape**: one walk per layer,
+  and between the layers a map whose recursion also takes a pattern-bound tail.
+  Measured together, all four checking: `recs(ts, acc, cur)` (the shrinking `ts`
+  first, the accumulators computed beside it) collects the records, `fields(r,
+  acc)` splits one record, and `rows(rs)` maps `fields` over them with `case
+  Con{r, t}: Con{fields(r, Nil{}), rows(t)}`. Nothing but a binder ever reaches
+  a self-call.
 - **When the number of steps can be computed, recurse on the count** (for
   example `ceil((hi - lo) / step)` candidates), and the fuel goes away.
 - **A fuel is for loops where nothing else shrinks** -- a server loop that only
