@@ -228,6 +228,26 @@ confirmed against every example in Base:
   induction case closes with (`i1(h)`) -- not a rewrite either. Measured in
   bend-schema's tag-key round on bend 2.0.32: the proof has such an equation in
   hand and no `%` line for it, and `same_why`/`same_why_m` are a line each.
+- **`?name` is a hole that asks: the checker reports the goal it is holding, in
+  its own reduced form, at that point.** Write it where the next line goes and
+  run the file; the error is `expected : {the goal} / observed : ?name`. It is
+  the fastest way to learn what a case split, an unfolding or an earlier rewrite
+  left behind, and it costs one line. Reach for it the moment an annotation will
+  not line up -- the shape to copy into the annotation is printed for you, and
+  copying it is the fix far more often than working out why it differs. The
+  error's `expected:` field carries the same information, but only for the line
+  that failed; `?name` asks at a line of your own choosing.
+- **A rewrite matches the form you wrote, and it does not re-normalise the
+  arguments you substituted into it.** `%lem(a, b) : P` is checked with `a` and
+  `b` as *terms*, so a parameter that stands in the goal under a definition the
+  goal has already reduced will not fire, even when the two are equal by
+  computation. Measured on csv-lib's round trip (bend 2.0.34): the goal held
+  `fld_end(sep, f, C.has_special(sep, f, False{}), st)`, the reduced form of
+  `needs_quotes(sep, False{}, f)`, and calling the lemma with the unreduced term
+  -- the one the same file's own def was written with -- was refused with
+  `expected : {...has_special...} / observed : {...needs_quotes...}`, while the
+  goal's own spelling fired at once. **Pass the form the goal has:** print it
+  with `?name`, or copy the `expected:` field of the failed line.
 
 ## 1.3 What computes, and what does not
 
