@@ -245,6 +245,17 @@ confirmed against every example in Base:
   `cons_row(c, r)` that matches `r` is stuck on `r = report(rest)`; a lemma that
   matches `r` and closes by `{==}` states what it does, oriented to eliminate
   the stuck call.
+- **A comparison of two literal characters computes; one on an abstract
+  character does not.** `U32.is_eq(34, 10) == False{}` and
+  `U32.is_eq(34, 34) == True{}` both close by `{==}`, so a `classify`-style def
+  applied to a literal reduces as far as its comparisons go -- on `Chr{34}` only
+  the one test that mentions the law's own `sep` (`is_eq(sep, 34)`) is still
+  stuck -- while the same def on `Chr{x}`, `x` abstract, is stuck on all four.
+  That is the difference between a per-character lemma that needs one hypothesis
+  and one that needs four, and the reason a `Chr{34}` case can be closed by
+  computation where a general character needs the four comparisons as
+  parameters (the shape `classify_go` itself uses, and what makes the stuck case
+  writable at all).
 - **The checker runs an entire fuel loop when the input is ground.** A claim
   about concrete data closes by `{==}` because the normaliser walks the loop to
   its exit. With an abstract value the loop stops at the first comparison
