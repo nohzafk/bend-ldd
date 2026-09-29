@@ -175,9 +175,26 @@ confirmed against every example in Base:
   turn a comparison into its answer is stated `{True{} == String.eq(s, s)}`;
   the other orientation is a valid theorem that will not fire. Keep both
   orientations of a load-bearing lemma (`add_assoc` and
-  `add_assoc_r`), or flip one inline with `Equal.sym`. Getting this the
+  `add_assoc_r`), or flip one inline with `Equal.sym`. The flip as a term is
+  `Equal.sym(A, a, b, h)` for `h : {a == b}`, and its type is `{b == a}`, so as
+  a rewrite it eliminates its **first** argument: a hypothesis bound as
+  `hlf : {U32.is_eq(x, 10) == False{} : Bool}` eliminates `False{}`, and
+  `%Equal.sym(Bool, U32.is_eq(x, 10), False{}, hlf)` eliminates
+  `U32.is_eq(x, 10)` instead. Every generated `_sym` twin in mathlib is that
+  call, which is why they read backwards (`reverse_go_spec_sym(s, acc)` is
+  `Equal.sym(String, String.reverse.go(s, acc), String.append(String.reverse(s),
+  acc), reverse_go_spec(s, acc))`). Getting this the
   wrong way round is the most common cause of a rejected line, and it is never
   the checker's fault.
+- **A library lemma's orientation is its `law` line, not the def beside it.**
+  mathlib writes each load-bearing fact twice: `law reverse_go_spec` is
+  `{String.reverse.go(s, acc) == String.append(String.reverse(s), acc)}`, while
+  `internal_reverse_go_spec` -- the def a few lines above it -- is the same
+  equation the other way round, and `reverse_go_spec_sym` is the flip again
+  (`_sym` is the convention's name for it). Reading the internal def or its
+  comment and assuming the public orientation follows costs a rejected line in a
+  file that looks right; one `grep -A4 '^law reverse_go_spec:'` before writing
+  the rewrite says which form fires.
 - **Every `_` in `P` is the same hole.** One rewrite replaces as many
   occurrences as `P` marks, so an affine hypothesis that must replace a
   variable in four places is used once:
@@ -190,6 +207,14 @@ confirmed against every example in Base:
   hypothesis may be written in a law's surface form (`String.eq(a, b)`) and
   still fire on the normalized goal (`String.eq.fin(String.cmp(a, b))`): the
   two are the same term.
+- **Two defs with the same body are two terms.** The checker's normal form
+  keeps a def's head when its body cannot reduce (1.3), and a def that matches
+  an abstract argument is stuck, so `esc_rev.push(q, c, acc)` and
+  `esc_char(q, c, acc)` -- the same arms under two names -- stay distinct in it.
+  A lemma stated with one never fires on a goal holding the other, and no
+  annotation repairs it. That is a reason to shape a core rather than work
+  around it: where two lanes need one step, call one def (`esc_rev` was
+  rewritten to call `esc_char`, which also deleted a helper).
 - **A constructor hides the hole, so lift the equation out of it.** A rewrite
   replaces a goal's occurrence of a lemma's right-hand side, and an occurrence
   inside a constructor is not one it reaches. The shape that bites is an
