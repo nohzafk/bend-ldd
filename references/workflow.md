@@ -166,8 +166,8 @@ at its cheapest, before there is a proof to rewrite.
 
 ### 4. Get the human's approval — the one step that needs a person
 
-Show each law in one line of plain language, why it matters, and what
-falsification found. Ask about any design choice the laws depend on (for
+Show each law with its `Guarantees:` and `Why it matters:` lines (the
+convention in SKILL.md), and what falsification found. Ask about any design choice the laws depend on (for
 example, "does the core sort, or does the host?"), and about every edge case
 from step 1 that the old code got wrong or left open: refuse it at the bridge,
 or give it a meaning in the core. Mention any change of shape the proof sketch

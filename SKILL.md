@@ -92,9 +92,23 @@ a question no law answers, is a decision nobody had made — whether touching
 windows are joined, whether an anonymous requester is covered by "any role",
 what a plan charges past its last tier. Take each one to the human; an
 implementation answers them by accident, and nobody knows a choice was made.
-Write every law so a person can read it, with one line of plain language saying
-what it guarantees and why it matters, because the human approves the
-invariants, not the code.
+Write every law so a person can read it, because the human approves the
+invariants, not the code. In `LAWS.bend`, put two comment lines in English
+directly above each `law`:
+
+```bend
+# Guarantees: a user event outside Idle changes nothing and answers Busy.
+# Why it matters: a second submit cannot corrupt the turn in flight, and the
+#   host refuses it on the core's answer instead of reading the phase itself.
+law ag_busy:
+  ...
+```
+
+`Guarantees:` is what holds, premises included, in plain words — not the Bend
+statement read aloud. `Why it matters:` is the failure the law rules out and who
+would suffer it. These two lines are what the human approves, so they sit with
+the statement, where a reviewer reads both together; a file header may list the
+law names, but does not repeat their descriptions.
 
 ## Where Bend belongs
 
