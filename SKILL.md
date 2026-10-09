@@ -110,6 +110,35 @@ would suffer it. These two lines are what the human approves, so they sit with
 the statement, where a reviewer reads both together; a file header may list the
 law names, but does not repeat their descriptions.
 
+### Only real failures earn a law
+
+That a property can be stated and proved does not mean it is worth having. A law,
+its proof, its mutant and the code it pins are paid for on every change after,
+and the cost is highest for the cases that never happen in use, because nobody
+notices when they rot. Before drafting a law, or a branch of a core that a law
+would pin, name the real situation that produces the input: who does what, with
+which running system. "Someone could send this" is not a situation when nothing
+that exists can send it.
+
+- **Ask about the lifetime.** A value that belongs to one run of a process (a
+  question number, a call token, a connection) ends with that run. After a
+  restart nothing can refer to it, so a law about what happens when something
+  does is about an input that cannot occur. Rebuild without it; do not replay it
+  to refuse it more precisely.
+- **Restore what the next action needs, not every state the history passed
+  through.** Replaying the past to recreate state nobody will use costs time on
+  every load, and that cost is real even when the state is not.
+- **Distinguish two refusals only when someone acts differently on them.** If
+  both answers mean "no" and no caller branches on which, one refusal is enough
+  and one law is enough.
+- **Write `Why it matters:` as a scenario, not a possibility.** "A client could
+  answer a question from before the restart" names a possibility; if you cannot
+  say which client, holding what, the law has no reason to exist.
+
+When the human asks "when would this happen?", the honest answer "never, in this
+system" is a reason to delete the law and the code it pins, not to keep them
+because they are proved.
+
 ## Where Bend belongs
 
 Put in Bend the part that is **small, pure, decides something, and is costly
