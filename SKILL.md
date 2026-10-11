@@ -267,8 +267,8 @@ is one `at` cannot state.
   `at` row.
 - `(fails in a shared lemma, not the law's own section)` — the mutant broke a
   lemma every run keeps, so it does not tell this law's mutant from another's.
-  Prefer a mutation that breaks inside the law's own section; when none exists,
-  the note is the honest record.
+  It is a diagnostic, not a defect: never copy a lemma into the law's own
+  section to move the failure there.
 - `(premise false on the core)` — the mutant's counterexample does not even
   satisfy the law's premises on the unmutated core, so the row says nothing
   about the law.
@@ -315,7 +315,7 @@ The gate is `bend PROOF.bend` plus the mutant check; run both before committing.
 | **`references/js-host.md`** | only when a JavaScript program is the caller: the project layout, the module build, the bridge, and the test at real scale |
 | **`references/language.md` 3.5** | only when a core folds over a large input and needs a parallel entry point: the cut as a projection of the machine, the law for every piece size, and the measured traps |
 | **`references/method.md`** | when a SKILL.md section's summary is not enough: where Bend belongs, the checker's speed, the eight proof rules in full |
-| **`references/multi-agent.md`** | when splitting the work across agents: stages, freezes, budgets, and the gate a coordinator enforces |
+| **`references/multi-agent.md`** | when splitting the work across agents: stages, the shared lemma layer proved before the laws are split, freezes, budgets, proof garbage collection, and the gate a coordinator enforces |
 | [bend-falsify's README](https://github.com/nohzafk/bend-falsify) | the spec format, the mutant table fields, and every report line |
 
 `references/language.md` and `references/proofs.md` are language experience only:

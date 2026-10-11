@@ -639,9 +639,10 @@ A proof that checks in 0.07 s may be proving less than you think.
 
 - **Make each law false and require its proof to fail.** Mutate the core so the
   law no longer holds -- not merely so the proof stops parsing -- and require
-  the failure inside that law's own lemmas. Check the unmutated copy from the
-  same place too, so the failure is known to be the mutation and not the
-  location.
+  its proof to fail. Where it fails (`failsIn`, the def the checker stopped
+  at) is a diagnostic, and it may be a shared lemma. Check the unmutated copy
+  from the same place too, so the failure is known to be the mutation and not
+  the location.
 - **Isolate the law under test.** The checker stops at the first failing def,
   in file order, and proofs built on the same definitions break together -- one
   mutation of a shared predicate can fail four proofs at once. So check one
@@ -653,7 +654,7 @@ A proof that checks in 0.07 s may be proving less than you think.
 - **A failure in a shared lemma is a weaker signal.** When a mutation changes a
   helper every proof describes, the proof fails in the lemma about the helper,
   not in the law's own induction. It still shows the proof depends on the
-  code.
+  code, and it is accepted; do not copy the lemma to move the failure.
 
 A harness can do all of this: split `PROOF.bend` into one section per law
 plus sections of shared lemmas, keep one law's section (and the shared ones)

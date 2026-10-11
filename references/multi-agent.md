@@ -51,8 +51,18 @@ argument to induct on, which lemma each case needs), because the sketch can
 show that the core should have a different shape. That has to happen before
 approval, not after.
 
-Output: the surviving laws, their counterexamples, and any proposed change of
-shape.
+The sketch also lists the **shared lemma layer**: every lemma at least two
+laws' proofs need, such as a view of the state, a one-step relation, or "this
+step keeps that property". When several laws turn out to describe the same
+relation, that relation is the specification: propose it as vocabulary in
+`LAWS.bend`, or the laws merged into one, for approval with the rest.
+
+The sketch ends with a size estimate: the laws, the shared layer, and roughly
+how much proof each needs. When the whole does not fit one prover's budget,
+stage 4 is split before any prover starts, never discovered half way.
+
+Output: the surviving laws, their counterexamples, the shared lemma layer, the
+size estimate, and any proposed change of shape.
 
 ### 3. Approve (the human, the only manual gate)
 
@@ -66,10 +76,29 @@ not the law text. The answer fixes:
 
 A law no approved decision asks for is not stated.
 
-### 4. Prove (a swarm)
+### 4. Prove, in two phases
 
-Each approved law goes to several provers. Each prover works in its own git
-worktree, with a different strategy hint: which argument to induct on, which
+Provers working blind in parallel each build their own copy of the lemmas
+their laws share, under their own names, and merging them means
+deduplicating proofs by hand. So the layer comes first.
+
+**4a. The shared layer (one prover).** One prover proves the shared lemma
+layer from the stage 2 sketch, and the laws that need nothing beyond it. The
+coordinator merges it before 4b starts.
+
+**4b. The laws (a swarm).** The remaining laws are split among provers, each
+in its own worktree off the merged layer, a few laws per prover, grouped by
+the lemmas they use.
+
+Lemmas are not frozen; laws are. A shared lemma that is too weak may be
+strengthened or given another clause, never weakened, and never re-proved
+under a new name. A prover that needs a new lemma for several laws hands it
+back to the coordinator, who adds it to the shared layer; it does not write a
+private copy under its own prefix. Before writing any lemma, a prover reads
+the signatures of the lemmas already there.
+
+A law that resists may go to several provers at once, each in its own
+worktree with a different strategy hint: which argument to induct on, which
 orientation to state a lemma in, which auxiliary fact to prove first. A
 coordinator runs the checker on every attempt and merges the first section
 that checks; the rest are discarded.
@@ -88,10 +117,18 @@ mutant against every law, and sorts each survivor into one of three kinds:
 - **Does not compile:** it was caught for the wrong reason. Fix the mutant.
 - **A real gap:** behaviour no law constrains. It becomes a candidate law and goes back to stage 3.
 
-Each law also gets one recorded mutant that must fail inside the law's own
-proof (`check_mutants.ts`).
+Each law also gets one recorded mutant (`check_mutants.ts`) that must make
+the law false on the mutated core and break its proof. Where the proof
+breaks (`failsIn`) is a diagnostic: a failure in a shared lemma is a weaker
+signal but an accepted one. Never copy a lemma into the law's own section to
+make the failure land there; that rebuilds the duplication 4a removed.
 
 ### 6. Integrate
+
+After every merge of a prover's branch, collect the proof's garbage with a
+script, not by reading: delete every def no law reaches, merge defs that are
+the same under renaming, then try deleting each remaining def and keep the
+deletion when `--verdict` still checks.
 
 Re-check equivalence with the function being replaced, if there is one, and run
 the whole gate. With a JavaScript caller, `js-host.md` adds the module, the
@@ -103,7 +140,8 @@ each of those tools needs the user's permission to add.
 These run on every merge and at the end, whatever an agent reports:
 - `bend PROOF.bend` prints `ALL PROOFS CHECK` and exits 0 (a TODO or unsafe code gives `SOME PROOFS FAIL`, exit 1). An unsafe definition proves anything.
 - `LAWS.bend` has the hash fixed at approval.
-- Every law has a mutant, every mutated core compiles, and every mutant fails in the law's own proof.
+- Every law has a mutant, every mutated core compiles, and every mutant makes its law false and breaks its proof.
+- After a merge, no def in `PROOF.bend` is unreachable from a law, and no two defs are the same under renaming.
 - The falsifier's control finds its planted bug.
 - the local facts file's gate passes, including its false-fact checks.
 

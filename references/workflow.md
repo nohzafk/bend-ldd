@@ -267,7 +267,8 @@ function over one in the predicate. A law proved from other laws names their
 sections in `with: [...]`.
 
 Check: `bun check_mutants.ts`. Every instance holds on the core and fails on
-the mutant, every control checks, and every mutant fails in the def named. A
+the mutant, every control checks, and every mutant fails in the def named
+(`failsIn`; a shared lemma is acceptable). A
 mutant that fails in `core.<def>`, or with "consumed more than once", does not
 compile. It is caught for the wrong reason, so make it compile first; a `+` on
 a pattern binder is often enough.
