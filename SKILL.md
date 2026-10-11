@@ -22,7 +22,8 @@ in `LAWS.bend` state what the program must do, the agent writes the code and
   to them as plain-language decisions *before* any law is drafted (laws →
   intention → decisions, read in that direction for the human). The agent
   writes the laws from the approved decisions, and a blind back-translation
-  checks that the laws say what was decided — the human does not have to read
+  checks that the laws say what was decided (needed whenever a law has a
+  premise or a helper predicate, or a subagent drafted it) — the human does not have to read
   a law to trust it. No proof is written until the decisions are approved and
   the back-translation matches. Workflow steps 1 and 4 say how.
 - **The checker is fast** — a proof file checks in a fraction of a second — so

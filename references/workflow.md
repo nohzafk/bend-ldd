@@ -192,6 +192,20 @@ question here is whether the laws say what was decided. Your own description of
 the laws cannot answer it: you wrote them from the decisions and will read the
 decisions back into them.
 
+**When it is needed.** Falsification and mutants check the laws against the
+core, never against the decisions: a law that drifted from a decision passes
+both. Back-translate when any of these holds:
+- a law has a premise (`for h: ...`) — a narrow premise drops real cases while
+  the law still reads right;
+- `LAWS.bend` defines helper predicates the statements rely on — the meaning
+  lives there;
+- a law covers several decisions, or a decision needs several laws together;
+- a subagent drafted the laws and you have only read its report.
+
+Skip it only when every law is a direct equation with no premise and no helper
+("state X, event Y, answers Z") that maps one-to-one to a decision; compare them
+yourself and say in the report that it was skipped and why.
+
 **Back-translate blind.** Give a fresh agent (an `evidence`-style judge) only
 `LAWS.bend` with every `# Guarantees:` / `# Why it matters:` line stripped, and
 the core it imports — never the decisions, never your summary. Ask for, in plain
