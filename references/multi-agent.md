@@ -7,14 +7,16 @@ through files and verdicts of the checker, never through trust in each other.
 This document is the design of that pipeline. `SKILL.md` has the working rules
 it relies on, and `workflow.md` is the same workflow for a single agent.
 
-The human's only job is to decide what "correct" means, by approving laws.
+The human's only job is to decide what "correct" means, by approving
+decisions in plain language (workflow.md step 1); the laws are checked against
+them by a blind back-translation (workflow.md step 4).
 Everything else is done by agents and judged by the checker.
 
 ## The principle
 
 - **Hand over files, not claims.** Each stage produces files the next stage reads: candidate laws, a falsification spec and its report, proof sections, a mutant table. An agent's summary of its own work is not an input to anything.
 - **The checker is the judge.** A proof is accepted when `bend` accepts it, whoever wrote it. There is no review of proof code.
-- **Freeze what has been approved.** Once the human approves the laws and the core's shape, they are fixed for the rest of the run. An agent that thinks either should change escalates; it does not edit.
+- **Freeze what has been approved.** Once the human approves the decisions, the back-translation matches the laws, and the core's shape is set, they are fixed for the rest of the run. An agent that thinks either should change escalates; it does not edit.
 - **Check the checkers.** A falsifier that never fails, or a mutant that does not compile, says nothing. Every judging step has a control that must fail.
 
 ## The stages
@@ -54,13 +56,15 @@ shape.
 
 ### 3. Approve (the human, the only manual gate)
 
-The human sees each law in plain language, the counterexamples, the
-edge-case decisions and any change of shape, as a structured question. The
-answer fixes:
+The human approved the decisions before drafting. Here the laws are
+back-translated blind and compared with them (workflow.md step 4); the human
+sees the decision-to-law map, any new decision the drafting or the
+back-translation produced, and any change of shape, as a structured question,
+not the law text. The answer fixes:
 - `LAWS.bend`, recorded by its hash
 - the core's data shape
 
-Laws the human does not approve are not stated.
+A law no approved decision asks for is not stated.
 
 ### 4. Prove (a swarm)
 
@@ -98,7 +102,7 @@ each of those tools needs the user's permission to add.
 
 These run on every merge and at the end, whatever an agent reports:
 - `bend PROOF.bend` prints `ALL PROOFS CHECK` and exits 0 (a TODO or unsafe code gives `SOME PROOFS FAIL`, exit 1). An unsafe definition proves anything.
-- `LAWS.bend` has the hash the human approved.
+- `LAWS.bend` has the hash fixed at approval.
 - Every law has a mutant, every mutated core compiles, and every mutant fails in the law's own proof.
 - The falsifier's control finds its planted bug.
 - the local facts file's gate passes, including its false-fact checks.

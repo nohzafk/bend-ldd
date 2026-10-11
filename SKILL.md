@@ -1,6 +1,6 @@
 ---
 name: bend-ldd
-description: Law-driven development for Bend 2 — state the laws, falsify them, get them approved, prove them, then mutate the core to find what no law pins down. Use when writing a Bend core, porting a function into one, or reviewing Bend code; drafting or approving laws in LAWS.bend; writing PROOF.bend; running bend, lawcheck or bend-falsify; adding a Bend mutant; finding the input that breaks a function; or bringing a function under proof that has to be right for every input.
+description: Law-driven development for Bend 2 — state the laws, falsify them, check them against the decisions the human approved, prove them, then mutate the core to find what no law pins down. Use when writing a Bend core, porting a function into one, or reviewing Bend code; drafting or approving laws in LAWS.bend; writing PROOF.bend; running bend, lawcheck or bend-falsify; adding a Bend mutant; finding the input that breaks a function; or bringing a function under proof that has to be right for every input.
 ---
 
 # Law-driven development in Bend
@@ -17,11 +17,14 @@ in `LAWS.bend` state what the program must do, the agent writes the code and
   leaves little room for an ambiguous program.
 - **The checker is the reviewer.** A proof that checks needs no one to trust the
   agent that wrote it. Spend review time on the laws, not on the code.
-- **The agent drafts the laws; the human approves them.** The guide has the
-  human write `LAWS.bend` and the agent never touch it. Here the agent may
-  propose laws — finding the invariants is part of the work — but each is shown
-  to the human with the reason it matters, and no proof is written against it
-  until the human approves it.
+- **The human approves decisions; the agent owns the laws.** The guide has the
+  human write `LAWS.bend`. Here the human decides how the system behaves, put
+  to them as plain-language decisions *before* any law is drafted (laws →
+  intention → decisions, read in that direction for the human). The agent
+  writes the laws from the approved decisions, and a blind back-translation
+  checks that the laws say what was decided — the human does not have to read
+  a law to trust it. No proof is written until the decisions are approved and
+  the back-translation matches. Workflow steps 1 and 4 say how.
 - **The checker is fast** — a proof file checks in a fraction of a second — so
   check after every step, not at the end, and let the error's `expected:` goal
   drive the next edit.
@@ -90,10 +93,10 @@ Ask what wrong implementation would still satisfy a law: if `return 0` or
 `return []` would, the laws are incomplete. A counterexample to a draft law, or
 a question no law answers, is a decision nobody had made — whether touching
 windows are joined, whether an anonymous requester is covered by "any role",
-what a plan charges past its last tier. Take each one to the human; an
-implementation answers them by accident, and nobody knows a choice was made.
-Write every law so a person can read it, because the human approves the
-invariants, not the code. In `LAWS.bend`, put two comment lines in English
+what a plan charges past its last tier. Take each one to the human as a
+decision; an implementation answers them by accident, and nobody knows a choice
+was made. Write every law so a person can read it: the back-translation reads
+the laws, and the human may. In `LAWS.bend`, put two comment lines in English
 directly above each `law`:
 
 ```bend
@@ -106,9 +109,11 @@ law ag_busy:
 
 `Guarantees:` is what holds, premises included, in plain words — not the Bend
 statement read aloud. `Why it matters:` is the failure the law rules out and who
-would suffer it. These two lines are what the human approves, so they sit with
-the statement, where a reviewer reads both together; a file header may list the
-law names, but does not repeat their descriptions.
+would suffer it. They sit with the statement, where a reader sees both
+together; a file header may list the law names, but does not repeat their
+descriptions. They are not what the human approves — the decisions are — and
+the back-translation does not read them, because they are the drafter's claim
+about the law, not the law.
 
 ### Only real failures earn a law
 

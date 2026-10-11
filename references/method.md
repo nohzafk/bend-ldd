@@ -60,10 +60,10 @@ minute.
   before calling it a gap. This does not say what the program *should* do; it
   says where nothing has been said yet.
 - **Many agents, one judge.** Some propose invariants, some falsify them, the
-  human approves the survivors, a swarm proves each law, and some mutate the
+  human approves the decisions the survivors encode, a swarm proves each law, and some mutate the
   core to find what no law constrains. The pipeline, with its stages, freezes,
-  budgets and gate, is in `references/multi-agent.md`. The human reads laws, not
-  code.
+  budgets and gate, is in `references/multi-agent.md`. The human decides
+  behaviour, not laws and not code.
 
 **Five seconds is the limit**, in the wrapper above and inside lawcheck and
 bend-falsify. On a core shaped for proof the checker answers in a fraction of a

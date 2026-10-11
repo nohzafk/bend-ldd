@@ -20,7 +20,7 @@ values. Parse, don't validate: the validated type should make invalid states
 unwritable, so the computing layer and its laws need no preconditions.
 
 - **What counts as valid is a specification decision.** State it as a small
-  predicate the human approves with the laws, not as checks someone wrote in the
+  predicate whose rules the human approves as decisions, not as checks someone wrote in the
   bridge.
 - **Errors are data.** Give each kind of error its own constructor, carrying
   where it happened (`NotIncreasing{index, prev, up}`). The host gets a
@@ -76,6 +76,27 @@ Also list every edge case the TS handles specially, such as inverted ranges,
 empty inputs and zero. Each is either kept (and a law should say so) or
 deliberately changed (and the human must hear about it).
 
+**Turn the list into decisions and put them to the human now, before any law
+is drafted.** The human decides behaviour, not statements; most humans will
+not read a law, and should not have to. A decision is:
+- a **scenario** in the system's own terms — what happens, who sees it ("a
+  second client asks the daemon to shut down while a turn is running");
+- the **options**, each with what the user or caller would observe and what
+  goes wrong if it is the other way;
+- your **recommendation** first.
+
+Every choice a law will encode is a decision here: what is refused and with
+which reason, which of two reasons wins when both hold, what an unknown or
+stale input gets, what happens after the end state. So is every premise that
+leaves a real-world case outside a guarantee — say it as "in case X this is
+not guaranteed". What stays yours: how many laws, how they are phrased and
+split, which premises are technical (distinct ids from an allocator), the
+proof shape.
+
+The approved decisions, numbered, are the specification the laws are drafted
+from. Give them to the drafter verbatim. A choice the drafter meets that no
+decision covers comes back as a new decision; it is not settled inside a law.
+
 ### 2. Write the core function in `core.bend`, shaped for the proof
 
 The shape decides how hard the proofs are. Before copying an algorithm you
@@ -115,7 +136,7 @@ test.
 The core takes the host's raw input and returns a validated value or the
 **first** error (see "The core validates" above). So besides the computing
 laws, draft:
-- the validity predicate, for the human to approve;
+- the validity predicate, from the validity rules the human decided;
 - the four validating laws: sound, complete, meaning-preserving and accurate.
 
 Edge cases the old code mishandled become either rules in the predicate or
@@ -164,17 +185,38 @@ reading, and no proof will say so, because the checker will simply refuse. This
 is why falsify before you prove: a counterexample here is that ambiguity found
 at its cheapest, before there is a proof to rewrite.
 
-### 4. Get the human's approval — the one step that needs a person
+### 4. Check the laws against the decisions — the human's step is the decisions
 
-Show each law with its `Guarantees:` and `Why it matters:` lines (the
-convention in SKILL.md), and what falsification found. Ask about any design choice the laws depend on (for
-example, "does the core sort, or does the host?"), and about every edge case
-from step 1 that the old code got wrong or left open: refuse it at the bridge,
-or give it a meaning in the core. Mention any change of shape the proof sketch
-suggests. The human may approve fewer laws than you propose; state only those
-in `LAWS.bend`. Use a structured question
-if one is available. **Write no proof until the laws are approved.** The human
-reviews laws, not code; a proof of the wrong statement is worthless.
+The human approved decisions in step 1 and will not read the laws, so the
+question here is whether the laws say what was decided. Your own description of
+the laws cannot answer it: you wrote them from the decisions and will read the
+decisions back into them.
+
+**Back-translate blind.** Give a fresh agent (an `evidence`-style judge) only
+`LAWS.bend` with every `# Guarantees:` / `# Why it matters:` line stripped, and
+the core it imports — never the decisions, never your summary. Ask for, in plain
+words: what each law guarantees and under which premises, and what the laws
+together leave unguaranteed (inputs no premise covers, behaviours no law
+constrains). Then compare, decision by decision:
+- a decision no law guarantees → a missing or too-weak law; fix and repeat;
+- a law guaranteeing something no decision says → the drafter decided it; take
+  it to the human as a new decision, or drop the law;
+- an "unguaranteed" the human would assume holds → a gap; a new decision.
+
+Report to the human, not the law text:
+- each decision, the law(s) that guarantee it, and whether the back-translation
+  agreed;
+- any new decision the drafting or the back-translation produced, put the way
+  step 1 puts decisions;
+- the evidence in one line: falsification hits per premise, mutants caught.
+
+The law text is available on request; never require it. Ask about any design
+choice the laws depend on ("does the core sort, or does the host?") and every
+edge case from step 1 the old code got wrong or left open as decisions. The
+human may drop decisions; state only the laws they need. Use a structured
+question if one is available. **Write no proof until the decisions are approved
+and the back-translation matches.** A proof of the wrong statement is
+worthless.
 
 ### 5. Prove, one line at a time
 
