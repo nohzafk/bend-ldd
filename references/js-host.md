@@ -46,7 +46,7 @@ a scaffold you type is a scaffold you understand.
 
 `test.sh` is the gate, and its order is the order to keep:
 
-1. `bend PROOF.bend` through the 5 s wrapper — proves every law, and refuses
+1. `bend PROOF.bend` through the CPU-limit wrapper — proves every law, and refuses
    any line about relying on unsafe or foreign code.
 2. The falsifier on the spec.
 3. The mutant table.

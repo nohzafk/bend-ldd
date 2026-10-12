@@ -161,26 +161,34 @@ complete without one — a core with no caller is a normal thing to prove.
 - **The checker** is `bend`. The gate is `bend PROOF.bend` exiting 0 with `ALL
   PROOFS CHECK`; a TODO, a type error or any unsafe or foreign def gives
   `SOME PROOFS FAIL` and exit 1. Wrap
-  every check in a 5 s timeout, and keep the wrapper beside the project:
+  every check in a limit of 10 s of CPU, and keep the wrapper beside the
+  project:
 
   ```sh
   #!/bin/sh
-  # bend-check <file.bend> [args]: the checker under a 5 s limit. A check past
-  # 5 s is a problem to fix, not a limit to raise -- a large constant the
+  # bend-check <file.bend> [args]: the checker under a limit of 10 s of CPU.
+  # CPU time, not wall-clock time: a loaded machine (several gates at once)
+  # stretches wall time without the Bend changing. The checker runs about two
+  # threads, so 10 s of CPU is about 5 s of wall time when idle. A check past
+  # it is a problem to fix, not a limit to raise -- a large constant the
   # checker walks (proofs.md 1.3), a fuel loop unfolded into a goal (proofs.md
-  # 1.7), or application code run inside a goal (proofs.md 1.5). Rethink the statement or the
-  # shape of the core.
+  # 1.7), or application code run inside a goal (proofs.md 1.5). Rethink the
+  # statement or the shape of the core. A checker that waits without computing
+  # is stopped after 60 s of wall time.
   # macOS ships no `timeout`; coreutils provides it as `gtimeout`. Refuse to run
   # unchecked rather than pretend the limit is there.
-  LIMIT=5
+  CPU=10
+  WALL=60
   TO=timeout; command -v timeout >/dev/null || TO=gtimeout
   if ! command -v "$TO" >/dev/null; then
     echo "bend-check: no timeout or gtimeout on PATH; install coreutils" >&2
     exit 127
   fi
-  "$TO" "$LIMIT" bend "$@"
+  "$TO" "$WALL" sh -c 'ulimit -t "$0" && exec bend "$@"' "$CPU" "$@"
   rc=$?
-  [ "$rc" = 124 ] && echo "bend-check: ran past $LIMIT s on: $*" >&2
+  [ "$rc" = 124 ] && echo "bend-check: did not finish in $WALL s of wall time on: $*" >&2
+  [ "$rc" -gt 128 ] && [ "$(kill -l $((rc - 128)))" = XCPU ] &&
+    echo "bend-check: used more than $CPU s of CPU on: $*" >&2
   exit "$rc"
   ```
 - **The standard library** is `~/.bend/bend2/base.bend`, and it ships facts you
@@ -252,8 +260,8 @@ skipped — 16 for a function-typed template binder (`no catalog functions for
 - **a claim that uses a premise's proof term** — lawcheck drops the premise and
   cannot decide the claim. Write the counterexample.
 
-The 5 s rule is this skill's, and neither tool applies it by itself:
-bend-falsify enforces it, and lawcheck defaults to 120 s unless given
+The time limit is this skill's: bend-falsify enforces 10 s of CPU itself, and
+lawcheck, which can only limit wall time, defaults to 120 s unless given
 `--timeout 5000`, which is why the commands above pass it. A check past the
 limit is a problem in the Bend, never a limit to raise. **A mutant row names the law's binders at literals
 with `at`** — the tool reads the law's statement out of `LAWS.bend` and
@@ -282,7 +290,8 @@ The checker answers in well under a second and Bend has no tactics, so the
 search moves to agents and the checker judges. **Falsify before you prove**
 (literal instances, or lawcheck). **Measure what the laws leave unconstrained**
 (mutate the core; a survivor is a missing law or an equivalent mutant).
-**Five seconds is the limit**: a check past 5 s is wrong, not slow; change the
+**Ten seconds of CPU is the limit** (about five of wall time): a check past it
+is wrong, not slow; change the
 statement or the core, never the limit. Details: `references/method.md` § Use
 the checker's speed.
 

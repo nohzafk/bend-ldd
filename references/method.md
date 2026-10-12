@@ -65,11 +65,13 @@ minute.
   budgets and gate, is in `references/multi-agent.md`. The human decides
   behaviour, not laws and not code.
 
-**Five seconds is the limit**, in the wrapper above and inside lawcheck and
-bend-falsify. On a core shaped for proof the checker answers in a fraction of a
+**Ten seconds of CPU is the limit** (about five of wall time: the checker runs
+two threads), in the wrapper above and inside bend-falsify (lawcheck's `--timeout 5000` is 5 s
+of wall time). It counts CPU, not wall time, so a loaded machine does not fail
+checks at random. On a core shaped for proof the checker answers in a fraction of a
 second, so checking after every edit costs nothing; a check that runs into
-seconds is a signal rather than a price. A check past 5 s is not slow, it is
-wrong: a large constant the checker walks (proofs.md 1.3), a fuel loop unfolded
+seconds is a signal rather than a price. A check past the limit is not slow, it
+is wrong: a large constant the checker walks (proofs.md 1.3), a fuel loop unfolded
 into a goal, application code in a goal. Do not raise the limit — change the
 statement or the shape of the
 core. The speed has a precondition, **short goals**: a goal that unfolds a big

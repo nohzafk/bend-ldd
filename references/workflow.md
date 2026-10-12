@@ -55,9 +55,9 @@ A core is `core.bend`, `LAWS.bend`, `PROOF.bend` and, beside them, a mutant
 table and a `test.sh` whose order is the order to keep. `references/js-host.md`
 lists the files in full for a JavaScript caller.
 
-Each step below has a check you can run, and each check runs under a 5 s limit
-(the `bend-check` wrapper in SKILL.md, and the timeouts inside the falsifier and
-the mutant harness). Run the check before moving on. The checker answers in well
+Each step below has a check you can run, and each check runs under a limit of
+10 s of CPU, about 5 s of wall time (the `bend-check` wrapper in SKILL.md, and
+the limits inside the falsifier and the mutant harness). Run the check before moving on. The checker answers in well
 under a second, so check after every edit, not at the end. A check that runs
 longer is a problem in the statement or the core's shape, never a limit to
 raise.
