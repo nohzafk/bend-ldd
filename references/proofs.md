@@ -307,6 +307,46 @@ confirmed against every example in Base:
   parameter. Take such a constant as a parameter (`f_under(x, lim)`), state
   the laws for every value of it, and instantiate it in one wrapper
   (`f(x) = f_under(x, limit())`): the laws get stronger, and no goal carries the constant.
+- **In `Nat.add`, put the variable first and the literal last.** `Nat.add`
+  recurses on its first argument, so `Nat.add(12000n, i)` with `i` abstract
+  unfolds into 12000 successors around a stuck `Nat.add(0n, i)`, while
+  `Nat.add(i, 12000n)` stays one stuck call. The successor chain is walked one
+  JS stack frame per step as soon as conversion has to compare the term after
+  unfolding a def, and the check dies with `the machine stack overflowed`,
+  far below the closed-term limit:
+
+  ```bend
+  def g(i: Nat) -> Nat:
+    Nat.add(1n, Nat.add(12000n, i))
+  def t(+i: Nat) -> {g(i) == Nat.add(1n, Nat.add(12000n, i)) : Nat}:
+    {==}                                  # overflows (2.0.36 and 2.0.37)
+  ```
+
+  | written | result |
+  |---|---|
+  | `Nat.add(1n, Nat.add(12000n, i))`, `Nat.add(8000n, Nat.add(8000n, i))` | overflow |
+  | `Nat.add(m, Nat.add(12000n, i))`, `m` abstract | overflow |
+  | `Nat.add(12000n, i)` alone, `Nat.add(3000n, Nat.add(3000n, i))` | checks |
+  | `Nat.add(i, 12000n)`, `Nat.add(Nat.add(i, 12000n), 4096n)` | checks |
+  | both sides written out as text, no def to unfold | checks |
+
+  A lemma proved with the constants as parameters does not rescue it: applying
+  it at the literals makes the checker unfold the same sums. Write every sum
+  that mixes a literal with a variable input-first (`Nat.add(input, 12000n)`,
+  `Nat.sub(Nat.sub(w, input), 12000n)`), in the core and in the laws'
+  reference defs; it changes no value, only the order the checker walks.
+- **The numbers a proof can hold, in one place.**
+
+  | limit | where it bites |
+  |---|---|
+  | a literal is at most 2^32-1 (`4294967295n`) | larger constants must be built (`limit()` above) |
+  | the runtime's `Nat` stops at 2^48-1 | a law's `Nat` is unbounded; bound inputs in the host (below) |
+  | the checker keeps a computed `Nat` unary | a closed sum or product past about 58800 overflows (`Nat.add(4294967294n, 1n) == 4294967295n` fails); a fuel numeral of 100000 overflows (above) |
+  | a literal as the first argument of `Nat.add` over a variable | overflows once a def is unfolded: measured at 12000 and at 8000+8000, not at 3000+3000 (the rule above) |
+  | a numeral that only sits in the goal | fine at any size (`Nat.div(_, 1000000n)`) |
+
+  Upstream treats checker stack overflows as a known limit, not a bug
+  (bendlang/bend #1071, WONTFIX #993): write around them, do not wait for a fix.
 - **Equality has no reflexivity.** `String.eq(s, s)` does not reduce when `s`
   is abstract: the goal stays `String.eq.fin(String.cmp(s, s))`, and the
   checker reports `expected : String.eq.fin(String.cmp(s, s)) / observed : True{}`.
