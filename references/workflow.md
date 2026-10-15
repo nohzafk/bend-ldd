@@ -254,24 +254,60 @@ proofs pass bend's checker and the BendTT kernel (proofs.md 1.1). An unsafe or
 foreign def anywhere in the proof, imports included, turns that into
 `SOME PROOFS FAIL` (exit 1). An unsafe def proves anything.
 
-### 6. Give every law a mutant
+### 6. Mutate the core, and record mutants only where they pay
 
-In `check_mutants.ts`, import the harness from the `bend-falsify` package —
-again, ask the user before you add it — and add one mutant per law: one line of `core.bend` changed so that the law becomes
+A proof already covers every input, so a mutant does not look for bugs in the
+code. Two uses, with different costs.
+
+**Explore: find what no law pins.** While drafting, change the core by hand —
+flip a Bool, add or subtract one, swap two arguments, return an empty value —
+and run the falsifier against each change (`CORE=<file>`). A change that no law
+notices is a missing law or an equivalent mutant; the human decides which.
+This is the use that finds real gaps. Nothing is recorded; the survivors
+become decisions and laws.
+
+**Record: a witness that the law is not empty.** A recorded row shows an
+instance where the law's premises hold and its conclusion is false on the
+mutated core (checks 1 to 3). Once that holds, no proof of the law can check
+on the mutant — the kernel is sound — so the proof's failure there adds only
+where it failed (`failsIn`). What the row proves is that the law can be false
+and depends on the line changed: it is not a tautology, and its conclusion is
+not carried by its premises alone. One row per law is enough for that. A
+recorded row runs on every gate, so record one only where emptiness is not
+plain from the statement:
+- the law has a premise (`for h: ...`), including a `!=` premise: the
+  conclusion may follow from the premises without the core;
+- both sides of the conclusion are applications of core defs, and that they
+  differ is not plain from reading them.
+
+Record none for a premise-free law whose conclusion sets one core application
+against a literal, a reference def in `LAWS.bend`, a Base expression, or a
+plainly different core application: treat the core's defs as black boxes and
+the conclusion plainly cannot follow, since changing the def's output falsifies
+it. `with` is not a reason to record one — it is how the proof is organized,
+not a sign that the law could be empty.
+
+Two kinds of empty law a recorded row does not catch:
+- a premise nothing satisfies: bend-falsify passes such a row with the note
+  `(premise false on the core)`. Count premise hits in the falsifier and read
+  them;
+- a premise the proof never uses: the law is weaker than what was proved.
+  Drop the premise, or ask the human whether the narrowing was a decision.
+
+When you record one, in `check_mutants.ts`, import the harness from the `bend-falsify` package —
+again, ask the user before you add it — and add the mutant: one line of `core.bend` changed so that the law becomes
 false, the def its proof must fail in, and an `at` — the law's binders at small
 literals. The tool reads the law's statement out of `LAWS.bend` and substitutes
 them, so the counterexample is an instance of the law by construction rather
 than a claim you asserted. Reach for `counter`, a claim of your own, only when
 the law's shape is one `at` cannot state. Prefer a mutation in the real
 function over one in the predicate. A law proved from other laws names their
-sections in `with: [...]`.
+sections in `with: [...]`, so its section is checked with theirs.
 
-A law may have several mutants: rows that request the same check (the law's
-control proof, an identical instance) share one bend run, so a second mutant
-costs only its own checks. Pick the smallest literals that make the law false,
-not just small ones: the instances checked on the unmutated core are batched
-into one bend run under one CPU limit, so one heavy instance can push its batch
-past the limit and back to one run per instance.
+Pick the smallest literals that make the law false, not just small ones: the
+instances checked on the unmutated core are batched into one bend run under
+one CPU limit, so one heavy instance can push its batch past the limit and back
+to one run per instance.
 
 Check: `bun check_mutants.ts`. Every instance holds on the core and fails on
 the mutant, every control checks, and every mutant fails in the def named

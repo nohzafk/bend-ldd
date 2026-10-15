@@ -119,7 +119,7 @@ about the law, not the law.
 ### Only real failures earn a law
 
 That a property can be stated and proved does not mean it is worth having. A law,
-its proof, its mutant and the code it pins are paid for on every change after,
+its proof, any mutant and the code it pins are paid for on every change after,
 and the cost is highest for the cases that never happen in use, because nobody
 notices when they rot. Before drafting a law, or a branch of a core that a law
 would pin, name the real situation that produces the input: who does what, with
@@ -303,14 +303,16 @@ the checker's speed.
 4. The specification is a small predicate; prove what it means.
 5. State membership as a witness split, `a <= b` as `b == a + k`.
 6. Shape the program for the proof: decisions as parameters, recurse on counts.
-7. Every law needs a mutant where it is false, and its proof must fail there.
+7. Mutate the core to find what no law pins; record a mutant only for a law
+   whose emptiness is not plain from its statement (a premise, or two core
+   applications compared).
 8. Accumulate: Base facts to mathlib, language rules to `references/language.md`.
    A fact that goes upstream goes to [bendlib](https://github.com/bendlib/bendlib)
    as its own branch off upstream `main`; a fact you keep goes to the submodule
    at `vendor/bendlib`. Never force-push a branch a submodule pins.
 
 Each rule in full: `references/method.md` § How to prove things about a core.
-The gate is `bend PROOF.bend` plus the mutant check; run both before committing.
+The gate is `bend PROOF.bend` plus the recorded mutants; run both before committing.
 
 ## Map — what to read, and when
 
