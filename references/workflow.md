@@ -266,6 +266,13 @@ the law's shape is one `at` cannot state. Prefer a mutation in the real
 function over one in the predicate. A law proved from other laws names their
 sections in `with: [...]`.
 
+A law may have several mutants: rows that request the same check (the law's
+control proof, an identical instance) share one bend run, so a second mutant
+costs only its own checks. Pick the smallest literals that make the law false,
+not just small ones: the instances checked on the unmutated core are batched
+into one bend run under one CPU limit, so one heavy instance can push its batch
+past the limit and back to one run per instance.
+
 Check: `bun check_mutants.ts`. Every instance holds on the core and fails on
 the mutant, every control checks, and every mutant fails in the def named
 (`failsIn`; a shared lemma is acceptable). A
