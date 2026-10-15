@@ -118,7 +118,8 @@ mutant against every law, and sorts each survivor into one of three kinds:
 - **A real gap:** behaviour no law constrains. It becomes a candidate law and goes back to stage 3.
 
 A law whose emptiness is not plain from its statement — one with a premise,
-or one comparing two core applications — also gets one recorded
+one holding a predicate of a core result to a constant, one comparing the core
+with a reference def that calls it — also gets one recorded
 mutant (`check_mutants.ts`; `workflow.md` step 6 says which) that must make
 the law false on the mutated core and break its proof. Where the proof
 breaks (`failsIn`) is a diagnostic: a failure in a shared lemma is a weaker

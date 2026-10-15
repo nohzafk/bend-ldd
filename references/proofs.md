@@ -638,8 +638,9 @@ adding them later is cheap.
 A proof that checks in 0.07 s may be proving less than you think.
 
 - **Make a law that could be empty false, and require its proof to fail.**
-  For a law with a premise, or one comparing two core applications (which
-  laws: `workflow.md` step 6), mutate the core so the
+  For a law with a premise, a predicate of a core result held to a constant,
+  or a reference def that calls the core (which laws: `workflow.md` step 6),
+  mutate the core so the
   law no longer holds -- not merely so the proof stops parsing -- and require
   its proof to fail. Where it fails (`failsIn`, the def the checker stopped
   at) is a diagnostic, and it may be a shared lemma. Check the unmutated copy

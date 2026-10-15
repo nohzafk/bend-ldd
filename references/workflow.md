@@ -272,20 +272,31 @@ mutated core (checks 1 to 3). Once that holds, no proof of the law can check
 on the mutant — the kernel is sound — so the proof's failure there adds only
 where it failed (`failsIn`). What the row proves is that the law can be false
 and depends on the line changed: it is not a tautology, and its conclusion is
-not carried by its premises alone. One row per law is enough for that. A
-recorded row runs on every gate, so record one only where emptiness is not
-plain from the statement:
+not carried by its premises alone. One row per law is enough for that.
+
+A recorded row runs on every gate, so record one only where emptiness is not
+plain from the statement. Treat the core's defs as black boxes: a premise-free
+equation is empty only if it holds whatever those defs compute. Record one row
+when:
 - the law has a premise (`for h: ...`), including a `!=` premise: the
   conclusion may follow from the premises without the core;
-- both sides of the conclusion are applications of core defs, and that they
-  differ is not plain from reading them.
+- the conclusion holds a predicate or projection of a core result to a
+  constant (`{sorted(C.ordered(es)) == True{}}`): the law is empty if that
+  predicate is constant;
+- a side reaches the core through a def of `LAWS.bend` that itself calls the
+  core (a reference machine such as `ref_step`): that def may unfold to the
+  computation it is compared with;
+- the conclusion has another shape (`exs`, a `!=` conclusion).
 
-Record none for a premise-free law whose conclusion sets one core application
-against a literal, a reference def in `LAWS.bend`, a Base expression, or a
-plainly different core application: treat the core's defs as black boxes and
-the conclusion plainly cannot follow, since changing the def's output falsifies
-it. `with` is not a reason to record one — it is how the proof is organized,
-not a sign that the law could be empty.
+Record none for any other premise-free equation: the two sides are different
+terms over black boxes, so changing a def's output falsifies it. That covers a
+core application against a literal, a Base expression or a reference def that
+does not call the core; two different core applications; and a predicate or
+projection of a core result against a non-constant reference. `with` is not a
+reason to record one — it is how the proof is organized, not a sign that the
+law could be empty. A law another proof names in `with` needs no row of its
+own, as long as its section is named after it (bend-falsify 0078305 and
+later).
 
 Two kinds of empty law a recorded row does not catch:
 - a premise nothing satisfies: bend-falsify passes such a row with the note

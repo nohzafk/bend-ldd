@@ -109,10 +109,10 @@ is the next goal.
    law can say its order is the source's order.
 7. **A law that could be empty needs a version of the core where it is false,
    and the proof must fail there.** A proof that checks in 0.07 s may be saying
-   nothing when the law has a premise or compares two core applications; a
-   premise-free equation setting a core application against a literal or a
-   reference def needs no recorded mutant (`workflow.md` step 6 says which laws
-   get one, and what a recorded row proves). Mutate the
+   nothing when the law has a premise, holds a predicate of a core result to a
+   constant, or compares the core with a reference def that calls it; any
+   other premise-free equation needs no recorded mutant (`workflow.md` step 6
+   says which laws get one, and what a recorded row proves). Mutate the
    core so the law no longer holds — not merely so the proof stops parsing — and
    require the proof to fail *inside its own lemmas*; check the unmutated copy
    from the same place. Isolate one law's proof per run, because the checker
