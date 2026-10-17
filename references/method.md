@@ -71,6 +71,60 @@ Write the laws in three layers, so that each proof stays small:
    answer delivered once across any sequence of events), proved from layers 1
    and 2.
 
+A whole-run law has one proof shape; copy it rather than invent one, and
+rather than import it from a shared module (the driver and the lift are a few
+lines each, and the part that is long — the per-step lemma — differs in every
+machine):
+
+- **The run carries what the law counts.** In LAWS.bend, a run accumulator
+  holds the state and whatever the law speaks of (a count of receipts, the
+  last answer), and a driver folds the events into it:
+
+  ```
+  type Acc is Data:
+    Acc{st: C.St, n: Nat}
+
+  def Spec.adv(a: Acc, e: C.Ev) -> Acc:      # one step, count the answer
+    ...
+
+  def Spec.run.go(es: List<&2, C.Ev>, a: Acc) -> Acc:
+    match es:
+      case Nil{}:
+        a
+      case Con{h, t}:
+        Spec.run.go(t, Spec.adv(a, h))
+  ```
+
+  The law is stated on `Spec.run.go(es, Acc{C.start(), 0n})`. Prefer counting
+  in the accumulator to a second fold over the events: a fact about one
+  accumulator is one induction, a relation between two folds needs two.
+- **The proof's invariant is on the accumulator**, `J(a)`, strong enough that
+  the law follows from `J` alone (for "at most once": no answer yet, or exactly
+  one and the state is final). Then three lemmas:
+
+  ```
+  # the per-step work
+  def Jadv(a: Acc, +e: C.Ev, h: {J(a) == True{} : Bool}) -> {J(Laws.Spec.adv(a, e)) == True{} : Bool}:
+    ...
+
+  def Jrun(es: List<&2, C.Ev>, +a: Acc, h: {J(a) == True{} : Bool}) -> {J(Laws.Spec.run.go(es, a)) == True{} : Bool}:
+    match es:
+      case Nil{}:
+        h
+      case Con{+x, t}:
+        Jrun(t, Laws.Spec.adv(a, x), Jadv(a, x, h))
+
+  def Laws.law(es):
+    post(Laws.Spec.run.go(es, init), Jrun(es, init, {==}))
+  ```
+
+  `post` turns `J` into the law's statement; `{==}` proves `J(init)`. All the
+  thinking is in `Jadv`, split on state and event; `Jrun` and the law are the
+  same few lines in every machine.
+- A whole-run law over stored records (`load`) has the same shape, with the
+  records in place of events and `load`'s replay as the driver; its premise
+  (a well-formed log) travels down the induction beside `h`.
+
 Falsify each law two ways. **Event sequences** from `load` reach the states the
 system really produces. **Arbitrary states filtered by `inv`** reach states
 the sequences rarely build, and they catch a law whose premise is weaker than
