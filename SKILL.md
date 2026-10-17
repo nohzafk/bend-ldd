@@ -152,6 +152,15 @@ when wrong**; keep IO, HTTP, time zones, parsing and npm in the host. The core
 accepts any input, reports the first error, and has no effects. The full rules:
 `references/method.md` § Where Bend belongs.
 
+When the decision depends on what happened before (a phase, a queue, a
+table of running things), write it as a state machine: `step(State, Ev) ->
+Out` plus `load(records)` when it must survive a restart. The host feeds
+events and dispatches on `Out`; a flag or map in the host that a later `if`
+reads is a state machine outside the core. Laws come in three layers: one
+invariant, one law per transition rule, whole-run properties. The full rules
+and how to falsify them: `references/method.md` § Logic with state over time
+is a state machine.
+
 One file in this skill is about a host, and only one: `references/js-host.md`,
 for a JavaScript caller. Everything else, the whole workflow included, is
 complete without one — a core with no caller is a normal thing to prove.

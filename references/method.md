@@ -34,6 +34,55 @@ packages.
   `references/workflow.md` has the two layers and the four laws they need.
 - **The core has no effects**, so its laws can import it.
 
+## Logic with state over time is a state machine
+
+When a decision depends on what happened before — a phase, a queue, a table of
+running things, a retry count — write it as a state machine: a datatype
+`State`, a datatype `Ev` for everything that can happen to it, and one total
+function `step(State, Ev) -> Out`, where `Out` carries the next state and an
+answer or command for the host. If state must survive a restart, add
+`load(records) -> State`, which rebuilds it from what the host stored.
+
+This is the shape Bend proves best, and the shape that keeps a host honest:
+
+- **The host only feeds and dispatches.** It turns each outside occurrence into
+  one `Ev`, calls `step`, keeps the new state, and runs what `Out` says with a
+  `switch` on its constructor. A flag, a map or a counter in the host whose
+  value an `if` reads later is a state machine living outside the core; move it
+  in.
+- **Every transition is named.** The `match` on `State` and `Ev` lists every
+  pair, so a case nobody decided shows up as a branch someone has to write, and
+  that branch is a decision for the human.
+- **The state holds only what is live.** Keep history out of `State`: the
+  host's store holds history, `load` reads it once. Then a step's cost, and the
+  cost of carrying the state across the boundary, depends on what is live, not
+  on how long the system has run.
+
+Write the laws in three layers, so that each proof stays small:
+
+1. **The invariant**, stated once: every state that `step` and `load` can
+   produce satisfies a predicate `inv`. Prove it as `inv(load(rs))` and
+   `inv(s) -> inv(step(s, e).state)`. No other law repeats the invariant's
+   content.
+2. **One law per transition rule**, with `inv(s)` as its premise: in this
+   state, this event gives this answer and this next state. A rule the human
+   approved is one law; a law that bundles several rules hides which one broke.
+3. **Whole-run properties** only when a single step cannot state them (an
+   answer delivered once across any sequence of events), proved from layers 1
+   and 2.
+
+Falsify each law two ways. **Event sequences** from `load` reach the states the
+system really produces. **Arbitrary states filtered by `inv`** reach states
+the sequences rarely build, and they catch a law whose premise is weaker than
+the author thought: a law that holds on every reachable state but whose
+premise also admits unreachable ones is false as written, and only the
+filtered states show it. If `inv` is too weak to make a filtered state
+reachable, strengthen `inv`, not the law.
+
+Not everything is a state machine. A decision with no memory — a codec, a
+selection, an ordering, a validity check — stays a plain function with its own
+laws. Do not thread a state through it to make it look like one.
+
 ## Use the checker's speed
 
 The checker answers in well under a second — a 360-line proof file checks in
