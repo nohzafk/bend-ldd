@@ -160,9 +160,9 @@ reads is a state machine outside the core. Laws come in three layers: one
 invariant, one law per transition rule, whole-run properties. The full rules
 and how to falsify them: `references/method.md` § Logic with state over time
 is a state machine. If the **`bend-statechart`** skill is installed, load it
-to explore the machine's reachable graph by BFS, check it for deadlocks and
-phase traps, and draw a Mermaid statechart with shortest counterexample paths
-for the human to review before proving. If it is not installed, skip this and
+to visit the machine's reachable states, check every law and deadlocks on
+them, and draw a Mermaid statechart with shortest counterexample paths for the
+human to review before proving. If it is not installed, skip this and
 go on with the laws.
 
 One file in this skill is about a host, and only one: `references/js-host.md`,
@@ -226,10 +226,11 @@ complete without one — a core with no caller is a normal thing to prove.
   are described in `references/js-host.md`; nothing above needs them.
 - **bend-statechart** is an optional companion skill for state-machine cores
   (`step(State, Ev) -> Out`), used only when it is installed: it compiles
-  `core.bend` and `LAWS.bend` with `bend-emit`, exhausts the bounded reachable
-  state graph by BFS, checks every law plus `NoDeadlock` and `NoPhaseTrap`, and
-  projects the graph through a `--view` module into a reader-facing Mermaid
-  `stateDiagram-v2` with shortest counterexample paths.
+  `core.bend` and `LAWS.bend` with `bend-emit`, visits every state that a
+  `--model` module's bounded events reach, checks every invariant and law plus
+  `NoDeadlock`, and draws the graph with pstack's statechart pipeline through
+  a `--view` module into a reader-facing Mermaid statechart with shortest
+  counterexample paths.
 
 Only `bend` and `bun` are required. Each tool above is reached when the step
 needs it, and **installing one is the user's call: ask before you add a
@@ -346,7 +347,7 @@ The gate is `bend PROOF.bend` plus the recorded mutants; run both before committ
 | **`references/language.md` 3.5** | only when a core folds over a large input and needs a parallel entry point: the cut as a projection of the machine, the law for every piece size, and the measured traps |
 | **`references/method.md`** | when a SKILL.md section's summary is not enough: where Bend belongs, the checker's speed, the eight proof rules in full |
 | **`references/multi-agent.md`** | when splitting the work across agents: stages, the shared lemma layer proved before the laws are split, freezes, budgets, proof garbage collection, and the gate a coordinator enforces |
-| **`bend-statechart` skill**, if installed | when designing, auditing, or reviewing a state-machine core (`step(State, Ev) -> Out`) with the human: exhaustive bounded BFS, `NoDeadlock` / `NoPhaseTrap`, and a Mermaid `stateDiagram-v2` with shortest counterexample paths |
+| **`bend-statechart` skill**, if installed | when designing, auditing, or reviewing a state-machine core (`step(State, Ev) -> Out`) with the human: every reachable state over bounded events, each law and `NoDeadlock`, and a Mermaid statechart with shortest counterexample paths |
 | [bend-falsify's README](https://github.com/nohzafk/bend-falsify) | the spec format, the mutant table fields, and every report line |
 
 `references/language.md` and `references/proofs.md` are language experience only:

@@ -135,13 +135,14 @@ reachable, strengthen `inv`, not the law.
 
 When designing a state machine or reviewing its transitions with the human
 before proving, load the **`bend-statechart`** skill if it is installed, and
-skip this paragraph if it is not. Its `scripts/statechart.ts`
-compiles `core.bend` and `LAWS.bend` with `bend-emit`, exhausts the bounded
-reachable state graph by BFS, checks every law plus `NoDeadlock` (no unmarked
-absorbing raw state) and `NoPhaseTrap` (no non-terminal view phase with no path
-out), and projects the graph through a `--view` module into a reader-facing
-Mermaid `stateDiagram-v2` with the shortest event path from `start` to any
-broken rule.
+skip this paragraph if it is not. It compiles `core.bend` and `LAWS.bend`
+with `bend-emit`, visits every state that a `--model` module's bounded events
+reach, checks each invariant and law plus `NoDeadlock` (a state no event leaves
+must be one the model calls terminal), and draws the graph with pstack's
+statechart pipeline through a `--view` module: a reader-facing Mermaid
+statechart with parent states or parallel regions, group colors, marks on the
+states that break a rule, and the shortest event path from the start to each
+one.
 
 Not everything is a state machine. A decision with no memory — a codec, a
 selection, an ordering, a validity check — stays a plain function with its own

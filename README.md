@@ -54,10 +54,10 @@ to somebody's project.
 
 [bend-statechart](https://github.com/nohzafk/bend-statechart) is for a core
 written as a state machine (`step(State, Ev) -> Out`). It visits every state
-reachable over a bounded set of events, checks every law plus deadlocks and
-phase traps on every step, and draws the graph as a Mermaid statechart with the
-shortest path to each broken rule, so the human reviews the transitions before
-the proofs. It is optional: this skill loads it when it is installed and skips
+reachable over a bounded set of events, checks every law plus deadlocks on
+every state and step, and draws the graph as a Mermaid statechart with pstack's
+statechart pipeline, with the shortest path to each broken rule, so the human
+reviews the transitions before the proofs. It is optional: this skill loads it when it is installed and skips
 the step when it is not.
 
 ```sh
