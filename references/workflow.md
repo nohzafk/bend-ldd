@@ -222,7 +222,10 @@ Report to the human, not the law text:
   agreed;
 - any new decision the drafting or the back-translation produced, put the way
   step 1 puts decisions;
-- the evidence in one line: falsification hits per premise, mutants caught.
+- the evidence in one line: falsification hits per premise, mutants caught;
+- for a state-machine core (`step(State, Ev) -> Out`), when the
+  **`bend-statechart`** skill is installed, its Mermaid `stateDiagram-v2` and
+  deadlock/phase-trap check; without it, leave this out.
 
 The law text is available on request; never require it. Ask about any design
 choice the laws depend on ("does the core sort, or does the host?") and every

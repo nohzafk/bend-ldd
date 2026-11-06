@@ -50,6 +50,20 @@ to somebody's project.
 | [`bend-emit`](https://github.com/nohzafk/bend-emit) | builds the typed JavaScript module from a core | a JavaScript program is the caller |
 | [`bend-schema`](https://github.com/nohzafk/bend-schema) | the codec and schemas where host values cross into Bend types | a JavaScript program is the caller |
 
+## The companion skill
+
+[bend-statechart](https://github.com/nohzafk/bend-statechart) is for a core
+written as a state machine (`step(State, Ev) -> Out`). It visits every state
+reachable over a bounded set of events, checks every law plus deadlocks and
+phase traps on every step, and draws the graph as a Mermaid statechart with the
+shortest path to each broken rule, so the human reviews the transitions before
+the proofs. It is optional: this skill loads it when it is installed and skips
+the step when it is not.
+
+```sh
+npx skills add nohzafk/bend-statechart
+```
+
 ## What is in it
 
 `SKILL.md` is the method, and its map says when to read each file.

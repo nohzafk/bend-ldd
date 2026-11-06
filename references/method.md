@@ -133,6 +133,16 @@ premise also admits unreachable ones is false as written, and only the
 filtered states show it. If `inv` is too weak to make a filtered state
 reachable, strengthen `inv`, not the law.
 
+When designing a state machine or reviewing its transitions with the human
+before proving, load the **`bend-statechart`** skill if it is installed, and
+skip this paragraph if it is not. Its `scripts/statechart.ts`
+compiles `core.bend` and `LAWS.bend` with `bend-emit`, exhausts the bounded
+reachable state graph by BFS, checks every law plus `NoDeadlock` (no unmarked
+absorbing raw state) and `NoPhaseTrap` (no non-terminal view phase with no path
+out), and projects the graph through a `--view` module into a reader-facing
+Mermaid `stateDiagram-v2` with the shortest event path from `start` to any
+broken rule.
+
 Not everything is a state machine. A decision with no memory — a codec, a
 selection, an ordering, a validity check — stays a plain function with its own
 laws. Do not thread a state through it to make it look like one.
