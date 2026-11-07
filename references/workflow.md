@@ -185,6 +185,24 @@ reading, and no proof will say so, because the checker will simply refuse. This
 is why falsify before you prove: a counterexample here is that ambiguity found
 at its cheapest, before there is a proof to rewrite.
 
+### 3b. A state machine: visit every state before the human reviews it
+
+A core that defines `start` and `step` (`step(State, Ev) -> Out`) is a state
+machine, and for it this step is required. Load the **`bend-statechart`** skill
+and follow it: write a model
+module that bounds the events and lists each invariant and law, and a view
+module that words the states and arrows for the human. Run its `statechart`
+command with `--out` in a scratch folder outside the repo; it compiles in a
+temporary copy and adds nothing to the project.
+
+Check: exit 0, so every invariant, every law and `NoDeadlock` holds on every
+reachable state. Exit 1 gives the shortest event path to each broken rule.
+Treat it as a counterexample from the falsifier: fix the law or the core, or
+take it to the human as a decision. Exit 2 means it could not run; fix the
+model, or report why in step 4. Never skip this step without saying so: if the
+skill is not among the agent's installed skills, the step 4 report says it is
+missing.
+
 ### 4. Check the laws against the decisions — the human's step is the decisions
 
 The human approved decisions in step 1 and will not read the laws, so the
@@ -223,9 +241,9 @@ Report to the human, not the law text:
 - any new decision the drafting or the back-translation produced, put the way
   step 1 puts decisions;
 - the evidence in one line: falsification hits per premise, mutants caught;
-- for a state-machine core (`step(State, Ev) -> Out`), when the
-  **`bend-statechart`** skill is installed, its Mermaid statechart and its
-  report of broken laws and deadlocks; without it, leave this out.
+- for a state-machine core (`step(State, Ev) -> Out`), the Mermaid statechart
+  from step 3b and its report of broken laws and deadlocks, or why step 3b
+  could not run.
 
 The law text is available on request; never require it. Ask about any design
 choice the laws depend on ("does the core sort, or does the host?") and every

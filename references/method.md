@@ -134,8 +134,8 @@ filtered states show it. If `inv` is too weak to make a filtered state
 reachable, strengthen `inv`, not the law.
 
 When designing a state machine or reviewing its transitions with the human
-before proving, load the **`bend-statechart`** skill if it is installed, and
-skip this paragraph if it is not. It compiles `core.bend` and `LAWS.bend`
+before proving, load the **`bend-statechart`** skill (`workflow.md` step 3b
+makes it a required step). It compiles `core.bend` and `LAWS.bend`
 with `bend-emit`, visits every state that a `--model` module's bounded events
 reach, checks each invariant and law plus `NoDeadlock` (a state no event leaves
 must be one the model calls terminal), and draws the graph with pstack's

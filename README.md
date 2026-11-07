@@ -57,8 +57,8 @@ written as a state machine (`step(State, Ev) -> Out`). It visits every state
 reachable over a bounded set of events, checks every law plus deadlocks on
 every state and step, and draws the graph as a Mermaid statechart with pstack's
 statechart pipeline, with the shortest path to each broken rule, so the human
-reviews the transitions before the proofs. It is optional: this skill loads it when it is installed and skips
-the step when it is not.
+reviews the transitions before the proofs. This skill runs it for every
+state-machine core, as step 3b of its workflow, and reports when it is missing.
 
 ```sh
 npx skills add nohzafk/bend-statechart
