@@ -214,11 +214,11 @@ complete without one — a core with no caller is a normal thing to prove.
   to a small local facts file of your own, whose gate must also refuse a false
   fact.
 - **lawcheck** is bendlib's `tools/lawcheck`. It generates literal instances and
-  small mutants and runs them through the checker. **It does not run on bend
-  2.0.32** (see the next section); until it is ported, use bend-falsify. Add
-  bendlib as a git submodule at `vendor/bendlib` and set
-  `LAWCHECK=vendor/bendlib/tools/lawcheck/cli.ts`. The path is relative to the
-  project, not to a bendlib checkout.
+  small mutants and runs them through the checker. It is tested on one bend
+  version only; its README names it. Add bendlib as a git submodule at
+  `vendor/bendlib` and set `LAWCHECK=vendor/bendlib/tools/lawcheck/cli.ts`.
+  The path is relative to the project, not to a bendlib checkout. Set up its
+  environment as the next section says before the first run.
 - **bend-falsify** is [github nohzafk/bend-falsify](https://github.com/nohzafk/bend-falsify).
   Its README is the spec — read it there; do not rely on a copy of it.
 - **bend-emit** and **bend-schema** exist only for a JavaScript caller. Both
@@ -237,16 +237,21 @@ dependency to their project.**
 
 ## Tool strategy: lawcheck first, bend-falsify for what it skips
 
-> **On bend 2.0.32 lawcheck does not run; use bend-falsify for every law.**
-> Its reader cannot load a file (2.0.32 changed the checker's spans, its
-> verdict text and its import-path rule), and a partial port stopped at 84 of
-> 103 of its tests. This section describes lawcheck as it works on the bend it
-> is pinned to, for when it is ported.
-
 **Run lawcheck on every law before you prove it.** It is the mechanical
-falsifier and mutator, it needs no spec file, and it shrinks what it finds.
+falsifier and mutator, it needs no spec file, and it shrinks what it finds. On
+most units it finishes in seconds; a unit with many laws over large types can
+take a few minutes. It is a step-3 check, not a per-commit gate.
+
+**Point it at the project's bend first.** lawcheck runs the bend named by
+`BEND_BIN`, else `~/.bend/bin/bend`, and only then the one on `PATH`. It also
+reads bend's source for that exact version: from `BENDLIB_BEND_SRC` when set,
+else it downloads the release archive and unpacks it with `tar --wildcards`,
+which macOS's `tar` refuses. So set both, to the bend the project pins and a
+checkout of bend's source at that same version:
 
 ```sh
+export BEND_BIN=<the project's pinned bend binary>
+export BENDLIB_BEND_SRC=<bend source checkout at that version>
 LAWCHECK=vendor/bendlib/tools/lawcheck/cli.ts
 
 bun "$LAWCHECK" LAWS.bend --timeout 5000           # every law, open or proved
@@ -260,17 +265,25 @@ nothing. A `✗` is a counterexample: the law is false as stated, so fix the
 statement before proving it. A `~` is a law it could not decide, with the
 reason, and an `!` is one that errored. It exits 0 when nothing failed, 1 when
 a law failed or a mutant survived, 2 on a usage error, so a `test.sh` can gate
-on the exit code. `--strict` turns a `~` into a failure, which is the reading
-this method wants: an undecided law is not a proved law.
+on the exit code. An undecided law is not a tested law: **every `~` goes to
+bend-falsify**, and the report to the human lists them. `--strict` turns a `~` into
+a failure, for a gate that has already sent its `~` laws there and names them
+in `--allow-skip`.
 
 `mutate` infers its target: it mutates the implementation the laws file
 imports when that file imports exactly one module and defines nothing itself,
-and otherwise its own defs. Pass `--impl <core.bend>` rather than rely on it. **lawcheck does
-not reach every law:** on bend-schema it evaluates 4 of 22, and the other 18 are
-skipped — 16 for a function-typed template binder (`no catalog functions for
-~rule: …`) and 2 because the claim uses a premise's proof term. Go to
-**bend-falsify** for those, and for tying a mutant to a law's own proof:
+and otherwise its own defs. Pass `--impl <core.bend>` rather than rely on it.
+When the laws file imports more than one file named `core.bend` (its own core
+and another unit's), `--impl` refuses (`cannot tell which import … to
+replace`), and without it `mutate` changes the laws file's own reference defs:
+every mutant comes back `unknown`. Write that unit's mutants for bend-falsify.
 
+**lawcheck does not reach every law.** It skips, with a `~` and the reason:
+
+- **a premise small values never meet** — random `Nat`s stay small
+  (`--max-nat`, default 30), so a law about a constant such as `60000` is
+  never instantiated, and a mutant that moves that boundary survives. Write
+  instances at the boundary.
 - **a function-typed binder** — lawcheck instantiates `~f` only from a small
   catalog of closed lambdas, and skips a signature outside it. A hand-written
   spec supplies the instances.
@@ -278,6 +291,9 @@ skipped — 16 for a function-typed template binder (`no catalog functions for
   nor a single predicate application. Write the instance.
 - **a claim that uses a premise's proof term** — lawcheck drops the premise and
   cannot decide the claim. Write the counterexample.
+
+All of these go to **bend-falsify**, and so does a mutant that must fail in one
+law's own proof.
 
 The time limit is this skill's: bend-falsify enforces 10 s of CPU itself, and
 lawcheck, which can only limit wall time, defaults to 120 s unless given
@@ -307,7 +323,7 @@ and the rest of the report. It is the source of truth for that tool.
 
 The checker answers in well under a second and Bend has no tactics, so the
 search moves to agents and the checker judges. **Falsify before you prove**
-(literal instances, or lawcheck). **Measure what the laws leave unconstrained**
+(lawcheck first, then literal instances for what it skips). **Measure what the laws leave unconstrained**
 (mutate the core; a survivor is a missing law or an equivalent mutant).
 **Ten seconds of CPU is the limit** (about five of wall time): a check past it
 is wrong, not slow; change the

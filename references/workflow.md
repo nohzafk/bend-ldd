@@ -148,11 +148,14 @@ error constructors, not checks in the bridge. Add the small predicate each law n
 
 Check the statements: `bend LAWS.bend` should report one TODO per new law.
 
-Then **falsify** each law on hundreds of small inputs. `bunx bend-falsify` needs
-the package installed, so **ask the user before you add it**: write a spec that
-emits literal instances, and run `bunx bend-falsify spec.ts` (`--each` lists
-every counterexample). lawcheck needs no spec and generates its own, so try it
-first — it needs a bendlib submodule at `vendor/bendlib`.
+Then **falsify** each law on hundreds of small inputs. Run lawcheck first: it
+needs no spec, generates its own instances, and needs a bendlib submodule at
+`vendor/bendlib` plus the two variables in SKILL.md § Tool strategy. Every law
+it reports `~` goes to bend-falsify, and so does every law whose premise names
+a constant larger than lawcheck's random `Nat`s reach. `bunx bend-falsify`
+needs the package installed, so **ask the user before you add it**: write a
+spec that emits literal instances, and run `bunx bend-falsify spec.ts`
+(`--each` lists every counterexample).
 Edge cases first: empty, zero, equal bounds, one element, inverted.
 
 Draw the instances **around the law's hypotheses**, so that most instances
