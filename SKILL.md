@@ -322,16 +322,18 @@ the checker's speed.
 4. The specification is a small predicate; prove what it means.
 5. State membership as a witness split, `a <= b` as `b == a + k`.
 6. Shape the program for the proof: decisions as parameters, recurse on counts.
-7. Mutate the core to find what no law pins; record a mutant only for a law
-   whose emptiness is not plain from its statement (a premise, a predicate of
-   a core result held to a constant, a reference def that calls the core).
+7. Mutate the core to find what no law pins, in one budgeted pass; record a
+   mutant only for a law whose emptiness is not plain from its statement (a
+   premise, a predicate of a core result held to a constant, a reference def
+   that calls the core).
 8. Accumulate: Base facts to mathlib, language rules to `references/language.md`.
    A fact that goes upstream goes to [bendlib](https://github.com/bendlib/bendlib)
    as its own branch off upstream `main`; a fact you keep goes to the submodule
    at `vendor/bendlib`. Never force-push a branch a submodule pins.
 
 Each rule in full: `references/method.md` § How to prove things about a core.
-The gate is `bend PROOF.bend` plus the recorded mutants; run both before committing.
+The gate is `bend PROOF.bend`; run it before committing. The recorded mutants
+run only when `LAWS.bend` or the mutant table changed (`workflow.md` step 6).
 
 ## Map — what to read, and when
 

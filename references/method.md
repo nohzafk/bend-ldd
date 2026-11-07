@@ -242,6 +242,7 @@ is the next goal.
    rule there turns out wrong, **reverse it loudly**: say it was reversed, what
    replaced it, and the control that shows the new claim is not too strong.
 
-The gate for a Bend project is `bend PROOF.bend`, plus the recorded mutants. Run
-both before committing. Parallelize the code whenever possible.
+The gate for a Bend project is `bend PROOF.bend`; run it before committing. The
+recorded mutants run when `LAWS.bend` or the mutant table changed, not on every
+commit (`workflow.md` step 6). Parallelize the code whenever possible.
 

@@ -26,7 +26,9 @@ Run before committing. `bend PROOF.bend --verdict`, through a wrapper that
 kills it past 10 s of CPU, prints `ALL PROOFS CHECK` and exits 0 (a TODO, any unsafe or
 foreign code, or a kernel mismatch gives `SOME PROOFS FAIL`, exit 1). The first
 `--verdict` of a bend release builds the kernel with Lean; do that outside the
-wrapper. Every recorded mutant fails inside its law's own proof.
+wrapper. When `LAWS.bend` or the mutant table changed, every recorded mutant
+also fails inside its law's own proof; a commit that changes neither skips
+them.
 
 The limit is this skill's, not the language's. It counts CPU time, not
 wall-clock time, so a loaded machine does not fail checks at random; the

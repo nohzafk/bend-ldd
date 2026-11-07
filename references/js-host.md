@@ -49,7 +49,8 @@ a scaffold you type is a scaffold you understand.
 1. `bend PROOF.bend` through the CPU-limit wrapper — proves every law, and refuses
    any line about relying on unsafe or foreign code.
 2. The falsifier on the spec.
-3. The mutant table.
+3. The mutant table, only when `LAWS.bend` or `check_mutants.ts` changed
+   (`workflow.md` step 6 has the condition).
 4. `bunx bend-emit core.bend dist`, then diff what it built.
 5. The host's tests, against the bridge.
 6. `bunx tsc -p .`.

@@ -143,7 +143,7 @@ each of those tools needs the user's permission to add.
 These run on every merge and at the end, whatever an agent reports:
 - `bend PROOF.bend` prints `ALL PROOFS CHECK` and exits 0 (a TODO or unsafe code gives `SOME PROOFS FAIL`, exit 1). An unsafe definition proves anything.
 - `LAWS.bend` has the hash fixed at approval.
-- Every recorded mutant's core compiles, makes its law false and breaks its proof.
+- When `LAWS.bend` or the mutant table changed: every recorded mutant's core compiles, makes its law false and breaks its proof.
 - After a merge, no def in `PROOF.bend` is unreachable from a law, and no two defs are the same under renaming.
 - The falsifier's control finds its planted bug.
 - the local facts file's gate passes, including its false-fact checks.

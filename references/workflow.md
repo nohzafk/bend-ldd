@@ -53,7 +53,9 @@ codec and the wording of errors, plus the IO.
 
 A core is `core.bend`, `LAWS.bend`, `PROOF.bend` and, beside them, a mutant
 table and a `test.sh` whose order is the order to keep. `references/js-host.md`
-lists the files in full for a JavaScript caller.
+lists the files in full for a JavaScript caller. The mutant table is not part
+of every run: `test.sh` runs it only when a law's statement or a row changed
+(step 6).
 
 Each step below has a check you can run, and each check runs under a limit of
 10 s of CPU, about 5 s of wall time (the `bend-check` wrapper in SKILL.md, and
@@ -287,6 +289,11 @@ notices is a missing law or an equivalent mutant; the human decides which.
 This is the use that finds real gaps. Nothing is recorded; the survivors
 become decisions and laws.
 
+Exploration has a budget: one pass, one or two changes per def a law calls.
+Write the pass as one script that applies each change to a scratch copy and
+runs the falsifier on it, so the pass is one run, not one agent turn per
+change. Stop after the pass; do not hunt for more survivors.
+
 **Record: a witness that the law is not empty.** A recorded row shows an
 instance where the law's premises hold and its conclusion is false on the
 mutated core (checks 1 to 3). Once that holds, no proof of the law can check
@@ -295,8 +302,24 @@ where it failed (`failsIn`). What the row proves is that the law can be false
 and depends on the line changed: it is not a tautology, and its conclusion is
 not carried by its premises alone. One row per law is enough for that.
 
-A recorded row runs on every gate, so record one only where emptiness is not
-plain from the statement. Treat the core's defs as black boxes: a premise-free
+Record one only where emptiness is not plain from the statement. A row shows
+that a law can be false, which rests on the law's statement, so the table does
+not run on every gate: `test.sh` runs it only when `LAWS.bend` or
+`check_mutants.ts` has a change against `HEAD` (any change to `LAWS.bend`
+reruns every row), and `MUTANTS=all ./test.sh` forces it:
+
+```sh
+if [ "${MUTANTS:-}" = all ] || [ -n "$(git status --porcelain -- LAWS.bend check_mutants.ts)" ]; then
+  bun check_mutants.ts || exit 1
+fi
+```
+
+`git status --porcelain` also lists an untracked file, so a new project runs
+the table on its first commit. A change to `core.bend` alone does not run it:
+a row whose changed line no longer applies shows up the next time a law
+changes, and is fixed then.
+
+Treat the core's defs as black boxes: a premise-free
 equation is empty only if it holds whatever those defs compute. Record one row
 when:
 - the law has a premise (`for h: ...`), including a `!=` premise: the
