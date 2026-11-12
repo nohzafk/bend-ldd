@@ -215,9 +215,11 @@ confirmed against every example in Base:
   annotation repairs it. That is a reason to shape a core rather than work
   around it: where two lanes need one step, call one def (`esc_rev` was
   rewritten to call `esc_char`, which also deleted a helper).
-- **A constructor hides the hole, so lift the equation out of it.** A rewrite
-  replaces a goal's occurrence of a lemma's right-hand side, and an occurrence
-  inside a constructor is not one it reaches. The shape that bites is an
+- **An equation between constructors does not give the equation of their
+  parts, so lift it out.** A rewrite does reach an occurrence inside a
+  constructor's fields: the motive puts `_` there (`C.Sum{.., _, ..}`) like
+  anywhere else. What no rewrite gives is the equation of two constructors'
+  parts from an equation of the constructors. The shape that bites is an
   equation between two constructor applications --
   `h : {Some{Err{p1, w1}} == Some{Err{p2, w2}} : Maybe<Err>}` -- where what the
   proof needs is the equation of the parts. Congruence gives it: write the
@@ -615,6 +617,16 @@ first or second try.
   proved for every accumulator
   (`total(go(us, acc)) == total(acc) + total(report(us))`), then instantiated
   at the starting value.
+- **Abstract a long `Bool.and` chain into lemmas over N plain Bools.** A
+  record's equality is often a chain of one `Bool.and` per field, and a rewrite
+  deep in it restates the whole chain in its motive. Prove the chain's facts
+  once over abstract Bools (`all13(a1, .., a13)`: the chain is `True{}` iff each
+  is; `split13`: take it apart), state each in the direction its rewrite will
+  use so no `Equal.sym` is needed, and every later motive names short
+  variables. Taking the chain apart with mathlib's `Bool.and` lemmas instead
+  costs on the order of N² text, because their erased arguments must still be
+  written. The price: such a lemma fits exactly N fields, so adding a field to
+  the record means new N+1 versions and every motive that uses them rewritten.
 - Then the arithmetic library you feared you needed -- distributivity,
   subtraction, cancellation -- often turns out not to be needed at all, and
   what is needed is short: the division equation, monotonicity of `Nat.div`

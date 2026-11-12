@@ -41,8 +41,11 @@ Before writing any Bend:
 2. Read the four rules and three principles below, then the map at the end of
    this file for what to read next.
 3. Before proving a fact about `Nat`, `String`, `List`, `Bool` or comparison,
-   look in `~/.bend/bend2/base.bend` and in **mathlib** (`PUBLIC_API.lock`
-   beside the modules is the index). It is very likely already there.
+   look in `~/.bend/bend2/base.bend` and in **mathlib**. In a checkout of the
+   fork, `PUBLIC_API.lock` beside the modules is the index. The hub copy bend
+   fetches has no index: `cat ~/.bend/lib/names/bend-mathlib@<version>` prints
+   its hash, and `~/.bend/lib/<hash>/` holds the `.bend` files to grep. It is
+   very likely already there.
 
 ## The four rules you meet first
 
@@ -52,7 +55,7 @@ reason is in the section named.
 | rule | the error | the fix | why |
 | --- | --- | --- | --- |
 | **A value used twice is marked `+`.** Parameters, pattern bindings (`case 1n++k:`, `case +h <> +t:`, `case (+pre, +w, ...)`), do-block bindings, and a law's binders — never a proof def's parameters. Type annotations inside the body count as uses. | `expected : x / observed : x (consumed more than once)` | add `+` where `x` is bound; for a proof, on the law's `for` | language.md 1.3 |
-| **One `match` per def, at its head, on a parameter.** No match inside a case arm, no match on a computed value — a pair destructuring `(a, b) = f(x)` is a match too. | `a match cannot scrutinize a computed value: give it its own def` | give the value its own def, where it is a parameter; inspect several things at once with `match a b:` | language.md 1.1 |
+| **A `match` heads a def body or a whole case arm, on a parameter or a field.** No match after another line of an arm (a destructuring or a `%` line), no match on a computed value — a pair destructuring `(a, b) = f(x)` is a match too. | `a match cannot scrutinize a computed value: give it its own def` | give the value its own def, where it is a parameter; inspect several things at once with `match a b:` | language.md 1.1 |
 | **A def comes before its use.** No forward call, so no mutual recursion. Datatypes are exempt: they may name each other in any order. | `expected : a filled definition (an unfilled law is a dead claim: live code cannot use it)` | order defs by dependency; when a step needs the recursive result, pass it in as a function argument (`ih: A -> B`) | language.md 1.2 |
 | **A rewrite has a direction.** `%e : P` replaces an occurrence of `e`'s **right-hand side** with its left-hand side, at the `_` in `P`. `P` is the goal as it stands, `_` at exactly the subterm to replace. | `expected : {...} / observed : {...}` side by side | copy `expected:` into `P`; if the form to remove is on `e`'s left, state the lemma the other way (`Equal.sym(A, a, b, h)` eliminates its **first** argument, and a library lemma's orientation is its `law` line, not the def beside it) | proofs.md 1.2 |
 

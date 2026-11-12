@@ -34,8 +34,10 @@ that is not in head position at all (`bend.ts:1855`).
   with `expected : a defined name`. Read fields by destructuring, which is why
   one-line extractors exist:
   `def name_of(r: T) -> String: match r: case T{name, _, _}: name`.
-- **No match inside a case arm.** Several things to inspect travel in
-  together: `match a b:` splits on several scrutinees at once, with nested
+- **A match inside a case arm must be the arm's whole body.** `case True{}:`
+  whose body is `match b:`, on a parameter or a field the pattern bound, is
+  accepted (checked on bend 2.0.40). Several things to inspect can also travel
+  in together: `match a b:` splits on several scrutinees at once, with nested
   patterns (`case 1n+f CS{Job{step, dur, people}, t, ...}`), and `case 0n _:`
   is allowed. A destructuring line is a match as well, and an arm holds one: an
   arm that destructures and then matches (`case Con{f, +t}: (hf, ht) = hc; match
